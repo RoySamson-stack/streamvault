@@ -8,7 +8,6 @@ import {
   getTrending, 
   getPopularMovies, 
   getTopRated, 
-  getPopularTV, 
   getAnime, 
   getNowPlaying,
   poster,
@@ -30,40 +29,13 @@ const transformMovie = (m: TMDBMovie) => ({
 })
 
 export default async function HomePage() {
-  // Try to fetch from TMDB
-  let tmdbData: any = null
-  let tmdbError = false
-
-  try {
-    const [trending, popular, topRated, anime, nowPlaying] = await Promise.all([
-      getTrending(),
-      getPopularMovies(),
-      getTopRated(),
-      getAnime(),
-      getNowPlaying(),
-    ])
-    tmdbData = { trending, popular, topRated, anime, nowPlaying }
-  } catch (e) {
-    console.error('TMDB Error:', e)
-    tmdbError = true
-  }
-
-  // If TMDB failed, show error message
-  if (tmdbError || !tmdbData) {
-    return (
-      <>
-        <Navbar />
-        <main style={{ paddingTop: 0 }}>
-          <HeroSection />
-          <div style={{ padding: '60px', textAlign: 'center', color: '#fff' }}>
-            <h2 style={{ color: 'var(--accent)' }}>Unable to load content</h2>
-            <p style={{ color: 'var(--muted)' }}>Please check TMDB API configuration</p>
-          </div>
-        </main>
-        <Footer />
-      </>
-    )
-  }
+  const [trending, popular, topRated, anime, nowPlaying] = await Promise.all([
+    getTrending(),
+    getPopularMovies(),
+    getTopRated(),
+    getAnime(),
+    getNowPlaying(),
+  ])
 
   return (
     <>
@@ -73,13 +45,13 @@ export default async function HomePage() {
         
         <ContentRow
           title={<>🔥 Trending This Week</>}
-          items={tmdbData.trending.results.slice(0, 10).map(transformMovie)}
+          items={trending.results.slice(0, 10).map(transformMovie)}
           tabs={['All', 'Action', 'Drama', 'Sci-Fi', 'Thriller', 'Comedy']}
         />
 
         <ContentRow
           title={<>⭐ Top Rated</>}
-          items={tmdbData.topRated.results.slice(0, 10).map(transformMovie)}
+          items={topRated.results.slice(0, 10).map(transformMovie)}
           cardSize="md"
           showRank
           pill="UPDATED DAILY"
@@ -87,18 +59,18 @@ export default async function HomePage() {
 
         <ContentRow
           title={<>📺 Popular Movies</>}
-          items={tmdbData.popular.results.slice(0, 10).map(transformMovie)}
+          items={popular.results.slice(0, 10).map(transformMovie)}
         />
 
         <ContentRow
           title={<>🆕 Now Playing</>}
-          items={tmdbData.nowPlaying.results.slice(0, 10).map(transformMovie)}
+          items={nowPlaying.results.slice(0, 10).map(transformMovie)}
           pill="FRESH"
         />
 
         <ContentRow
           title={<>⛩ Anime</>}
-          items={tmdbData.anime.results.slice(0, 10).map(transformMovie)}
+          items={anime.results.slice(0, 10).map(transformMovie)}
           tabs={['Popular', 'New Season', 'Action', 'Romance', 'Fantasy']}
         />
 
