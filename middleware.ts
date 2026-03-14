@@ -1,23 +1,23 @@
-// middleware.ts  (lives at project root, next to package.json)
-// Refreshes Supabase session cookies on every request
-// and protects routes that require authentication.
-
+// middleware.ts
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Routes that require the user to be logged in
 const PROTECTED = ['/watchlist', '/profile', '/settings', '/download']
-
-// Routes that logged-in users shouldn't see (redirect to home)
 const AUTH_ROUTES = ['/auth/login', '/auth/signup', '/auth/forgot']
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // Skip Supabase auth if not configured
+  if (!supabaseUrl || !supabaseKey) {
+    return response
+  }
+
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         get(name: string) {
           return request.cookies.get(name)?.value
@@ -33,30 +33,29 @@ export async function middleware(request: NextRequest) {
           response.cookies.set({ name, value: '', ...options })
         },
       },
+    })
+
+    const { data: { user } } = await supabase.auth.getUser()
+
+    const path = request.nextUrl.pathname
+
+    if (user && AUTH_ROUTES.some(r => path.startsWith(r))) {
+      return NextResponse.redirect(new URL('/', request.url))
     }
-  )
 
-  // Refresh session — important for Server Components
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const path = request.nextUrl.pathname
-
-  // Redirect logged-in users away from auth pages
-  if (user && AUTH_ROUTES.some(r => path.startsWith(r))) {
-    return NextResponse.redirect(new URL('/', request.url))
-  }
-
-  // Redirect unauthenticated users away from protected pages
-  if (!user && PROTECTED.some(r => path.startsWith(r))) {
-    const url = new URL('/auth/login', request.url)
-    url.searchParams.set('next', path)
-    return NextResponse.redirect(url)
+    if (!user && PROTECTED.some(r => path.startsWith(r))) {
+      const url = new URL('/auth/login', request.url)
+      url.searchParams.set('next', path)
+      return NextResponse.redirect(url)
+    }
+  } catch (error) {
+    // Continue without auth if there's an error
+    console.error('Middleware error:', error)
   }
 
   return response
 }
 
 export const config = {
-  // Run middleware on all routes except static files & API
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }
