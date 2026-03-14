@@ -15,21 +15,13 @@ import {
   backdrop,
   TMDBMovie,
 } from '@/lib/tmdb'
-import {
-  CONTINUE_WATCHING,
-  TRENDING_MOVIES,
-  TOP_10,
-  POPULAR_SERIES,
-  ANIME_LIST,
-  NEW_RELEASES,
-} from '@/lib/data'
 
 const transformMovie = (m: TMDBMovie) => ({
   id: String(m.id),
-  title: m.title,
+  title: m.title || '',
   seed: String(m.id),
   rating: m.vote_average || 0,
-  year: m.release_date ? parseInt(m.release_date.split('-')[0]) : 2024,
+  year: m.release_date ? parseInt(String(m.release_date).split('-')[0]) : 2024,
   genre: [],
   poster: poster(m.poster_path),
   backdrop: backdrop(m.backdrop_path),
@@ -38,58 +30,9 @@ const transformMovie = (m: TMDBMovie) => ({
 })
 
 export default async function HomePage() {
-  let useMockData = false
-
-  try {
-    await getTrending()
-  } catch (e) {
-    console.log('TMDB not configured, using mock data')
-    useMockData = true
-  }
-
-  if (useMockData) {
-    return (
-      <>
-        <Navbar />
-        <main style={{ paddingTop: 0 }}>
-          <HeroSection />
-          <ContentRow
-            title={<>Continue Watching</>}
-            items={CONTINUE_WATCHING}
-            cardSize="wide"
-            showProgress
-          />
-          <ContentRow
-            title={<>🔥 Trending Movies</>}
-            items={TRENDING_MOVIES}
-            tabs={['All', 'Action', 'Drama', 'Sci-Fi', 'Thriller', 'Comedy']}
-          />
-          <ContentRow
-            title={<>Top 10 This Week</>}
-            items={TOP_10}
-            cardSize="md"
-            showRank
-            pill="UPDATED DAILY"
-          />
-          <ContentRow
-            title={<>📺 Popular Series</>}
-            items={POPULAR_SERIES}
-          />
-          <ContentRow
-            title={<>⛩ Anime Collection</>}
-            items={ANIME_LIST}
-          />
-          <ContentRow
-            title={<>🆕 New Releases</>}
-            items={NEW_RELEASES}
-            pill="FRESH"
-          />
-          <SportsRow />
-        </main>
-        <Footer />
-      </>
-    )
-  }
+  // Try to fetch from TMDB
+  let tmdbData: any = null
+  let tmdbError = false
 
   try {
     const [trending, popular, topRated, anime, nowPlaying] = await Promise.all([
@@ -99,91 +42,69 @@ export default async function HomePage() {
       getAnime(),
       getNowPlaying(),
     ])
+    tmdbData = { trending, popular, topRated, anime, nowPlaying }
+  } catch (e) {
+    console.error('TMDB Error:', e)
+    tmdbError = true
+  }
 
+  // If TMDB failed, show error message
+  if (tmdbError || !tmdbData) {
     return (
       <>
         <Navbar />
         <main style={{ paddingTop: 0 }}>
           <HeroSection />
-          
-          <ContentRow
-            title={<>🔥 Trending This Week</>}
-            items={trending.results.slice(0, 10).map(transformMovie)}
-            tabs={['All', 'Action', 'Drama', 'Sci-Fi', 'Thriller', 'Comedy']}
-          />
-
-          <ContentRow
-            title={<>⭐ Top Rated</>}
-            items={topRated.results.slice(0, 10).map(transformMovie)}
-            cardSize="md"
-            showRank
-            pill="UPDATED DAILY"
-          />
-
-          <ContentRow
-            title={<>📺 Popular Movies</>}
-            items={popular.results.slice(0, 10).map(transformMovie)}
-          />
-
-          <ContentRow
-            title={<>🆕 Now Playing</>}
-            items={nowPlaying.results.slice(0, 10).map(transformMovie)}
-            pill="FRESH"
-          />
-
-          <ContentRow
-            title={<>⛩ Anime</>}
-            items={anime.results.slice(0, 10).map(transformMovie)}
-            tabs={['Popular', 'New Season', 'Action', 'Romance', 'Fantasy']}
-          />
-
-          <SportsRow />
-        </main>
-        <Footer />
-      </>
-    )
-  } catch (error) {
-    console.error('Failed to fetch from TMDB:', error)
-    return (
-      <>
-        <Navbar />
-        <main style={{ paddingTop: 0 }}>
-          <HeroSection />
-          <ContentRow
-            title={<>Continue Watching</>}
-            items={CONTINUE_WATCHING}
-            cardSize="wide"
-            showProgress
-          />
-          <ContentRow
-            title={<>🔥 Trending Movies</>}
-            items={TRENDING_MOVIES}
-            tabs={['All', 'Action', 'Drama', 'Sci-Fi', 'Thriller', 'Comedy']}
-          />
-          <ContentRow
-            title={<>⭐ Top Rated</>}
-            items={TOP_10}
-            cardSize="md"
-            showRank
-            pill="UPDATED DAILY"
-          />
-          <ContentRow
-            title={<>📺 Popular Series</>}
-            items={POPULAR_SERIES}
-          />
-          <ContentRow
-            title={<>⛩ Anime Collection</>}
-            items={ANIME_LIST}
-          />
-          <ContentRow
-            title={<>🆕 New Releases</>}
-            items={NEW_RELEASES}
-            pill="FRESH"
-          />
-          <SportsRow />
+          <div style={{ padding: '60px', textAlign: 'center', color: '#fff' }}>
+            <h2 style={{ color: 'var(--accent)' }}>Unable to load content</h2>
+            <p style={{ color: 'var(--muted)' }}>Please check TMDB API configuration</p>
+          </div>
         </main>
         <Footer />
       </>
     )
   }
+
+  return (
+    <>
+      <Navbar />
+      <main style={{ paddingTop: 0 }}>
+        <HeroSection />
+        
+        <ContentRow
+          title={<>🔥 Trending This Week</>}
+          items={tmdbData.trending.results.slice(0, 10).map(transformMovie)}
+          tabs={['All', 'Action', 'Drama', 'Sci-Fi', 'Thriller', 'Comedy']}
+        />
+
+        <ContentRow
+          title={<>⭐ Top Rated</>}
+          items={tmdbData.topRated.results.slice(0, 10).map(transformMovie)}
+          cardSize="md"
+          showRank
+          pill="UPDATED DAILY"
+        />
+
+        <ContentRow
+          title={<>📺 Popular Movies</>}
+          items={tmdbData.popular.results.slice(0, 10).map(transformMovie)}
+        />
+
+        <ContentRow
+          title={<>🆕 Now Playing</>}
+          items={tmdbData.nowPlaying.results.slice(0, 10).map(transformMovie)}
+          pill="FRESH"
+        />
+
+        <ContentRow
+          title={<>⛩ Anime</>}
+          items={tmdbData.anime.results.slice(0, 10).map(transformMovie)}
+          tabs={['Popular', 'New Season', 'Action', 'Romance', 'Fantasy']}
+        />
+
+        <SportsRow />
+      </main>
+      <Footer />
+    </>
+  )
 }
