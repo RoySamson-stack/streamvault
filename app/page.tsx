@@ -15,8 +15,15 @@ import {
   backdrop,
   TMDBMovie,
 } from '@/lib/tmdb'
+import {
+  CONTINUE_WATCHING,
+  TRENDING_MOVIES,
+  TOP_10,
+  POPULAR_SERIES,
+  ANIME_LIST,
+  NEW_RELEASES,
+} from '@/lib/data'
 
-// Transform TMDB movie to ContentItem format
 const transformMovie = (m: TMDBMovie) => ({
   id: String(m.id),
   title: m.title,
@@ -31,6 +38,59 @@ const transformMovie = (m: TMDBMovie) => ({
 })
 
 export default async function HomePage() {
+  let useMockData = false
+
+  try {
+    await getTrending()
+  } catch (e) {
+    console.log('TMDB not configured, using mock data')
+    useMockData = true
+  }
+
+  if (useMockData) {
+    return (
+      <>
+        <Navbar />
+        <main style={{ paddingTop: 0 }}>
+          <HeroSection />
+          <ContentRow
+            title={<>Continue Watching</>}
+            items={CONTINUE_WATCHING}
+            cardSize="wide"
+            showProgress
+          />
+          <ContentRow
+            title={<>🔥 Trending Movies</>}
+            items={TRENDING_MOVIES}
+            tabs={['All', 'Action', 'Drama', 'Sci-Fi', 'Thriller', 'Comedy']}
+          />
+          <ContentRow
+            title={<>Top 10 This Week</>}
+            items={TOP_10}
+            cardSize="md"
+            showRank
+            pill="UPDATED DAILY"
+          />
+          <ContentRow
+            title={<>📺 Popular Series</>}
+            items={POPULAR_SERIES}
+          />
+          <ContentRow
+            title={<>⛩ Anime Collection</>}
+            items={ANIME_LIST}
+          />
+          <ContentRow
+            title={<>🆕 New Releases</>}
+            items={NEW_RELEASES}
+            pill="FRESH"
+          />
+          <SportsRow />
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
   try {
     const [trending, popular, topRated, anime, nowPlaying] = await Promise.all([
       getTrending(),
@@ -89,10 +149,38 @@ export default async function HomePage() {
         <Navbar />
         <main style={{ paddingTop: 0 }}>
           <HeroSection />
-          <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
-            <h2>Unable to load content</h2>
-            <p>Please check your TMDB API key configuration.</p>
-          </div>
+          <ContentRow
+            title={<>Continue Watching</>}
+            items={CONTINUE_WATCHING}
+            cardSize="wide"
+            showProgress
+          />
+          <ContentRow
+            title={<>🔥 Trending Movies</>}
+            items={TRENDING_MOVIES}
+            tabs={['All', 'Action', 'Drama', 'Sci-Fi', 'Thriller', 'Comedy']}
+          />
+          <ContentRow
+            title={<>⭐ Top Rated</>}
+            items={TOP_10}
+            cardSize="md"
+            showRank
+            pill="UPDATED DAILY"
+          />
+          <ContentRow
+            title={<>📺 Popular Series</>}
+            items={POPULAR_SERIES}
+          />
+          <ContentRow
+            title={<>⛩ Anime Collection</>}
+            items={ANIME_LIST}
+          />
+          <ContentRow
+            title={<>🆕 New Releases</>}
+            items={NEW_RELEASES}
+            pill="FRESH"
+          />
+          <SportsRow />
         </main>
         <Footer />
       </>

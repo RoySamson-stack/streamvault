@@ -13,7 +13,7 @@ export const poster = (path: string | null): string | null =>
   img(path, 'w500')
 
 export const tmdbFetch = async <T>(endpoint: string): Promise<T> => {
-  if (!KEY) {
+  if (!KEY || KEY === 'YOUR_TMDB_API_KEY_HERE') {
     throw new Error('TMDB API key not configured')
   }
   const url = `${BASE}${endpoint}&api_key=${KEY}`
