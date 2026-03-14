@@ -1,10 +1,24 @@
 'use client'
 // components/HeroSection.tsx
 import { useState, useEffect } from 'react'
-import { HERO_SLIDES, HeroSlide } from '@/lib/data'
+import { HERO_SLIDES } from '@/lib/data'
+
+interface HeroSlide {
+  id: string
+  title: string
+  subtitle?: string
+  description?: string
+  rating?: number
+  year?: number
+  runtime?: string
+  pg?: string
+  tags?: string[]
+  poster?: string | null
+  backdrop?: string | null
+}
 
 export default function HeroSection({ slides }: { slides?: HeroSlide[] }) {
-  const activeSlides = slides && slides.length > 0 ? slides : HERO_SLIDES
+  const activeSlides: HeroSlide[] = slides && slides.length > 0 ? slides : []
   const [current, setCurrent] = useState(0)
   const [animating, setAnimating] = useState(false)
 
