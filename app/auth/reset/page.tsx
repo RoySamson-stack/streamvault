@@ -18,6 +18,7 @@ export default function ResetPasswordPage() {
     if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
     setLoading(true); setError('')
     const supabase = createClient()
+    if (!supabase) { setError('Supabase not configured'); setLoading(false); return }
     const { error: err } = await supabase.auth.updateUser({ password })
     if (err) { setError(err.message); setLoading(false); return }
     setDone(true)

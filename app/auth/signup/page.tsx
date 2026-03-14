@@ -25,6 +25,7 @@ export default function SignupPage() {
     if (form.password.length < 6) { setError('Password must be at least 6 characters.'); return }
     setLoading(true); setError('')
     const supabase = createClient()
+    if (!supabase) { setError('Supabase not configured'); setLoading(false); return }
     const { error: err } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
@@ -36,6 +37,7 @@ export default function SignupPage() {
 
   async function handleOAuth(provider: 'google' | 'github') {
     const supabase = createClient()
+    if (!supabase) return
     await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo: `${window.location.origin}/auth/callback` },

@@ -17,6 +17,7 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     const supabase = createClient()
+    if (!supabase) { setError('Supabase not configured'); setLoading(false); return }
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
     if (err) { setError(err.message); setLoading(false); return }
     router.push('/')
@@ -25,6 +26,7 @@ export default function LoginPage() {
 
   async function handleOAuth(provider: 'google' | 'github') {
     const supabase = createClient()
+    if (!supabase) return
     await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo: `${window.location.origin}/auth/callback` },
