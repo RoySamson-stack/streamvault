@@ -2,7 +2,6 @@
 import Navbar from './components/Navbar'
 import HeroSection from './components/HeroSection'
 import ContentRow from './components/ContentRow'
-import SportsRow from './components/SportsRow'
 import Footer from './components/Footer'
 import { 
   getTrending, 
@@ -13,7 +12,22 @@ import {
   poster,
   backdrop,
   TMDBMovie,
+  getGenreNames,
 } from '@/lib/tmdb'
+
+interface HeroSlide {
+  id: string
+  title: string
+  subtitle?: string
+  description?: string
+  rating?: number
+  year?: number
+  runtime?: string
+  pg?: string
+  tags?: string[]
+  poster?: string | null
+  backdrop?: string | null
+}
 
 const transformMovie = (m: TMDBMovie) => ({
   id: String(m.id),
@@ -21,11 +35,22 @@ const transformMovie = (m: TMDBMovie) => ({
   seed: String(m.id),
   rating: m.vote_average || 0,
   year: m.release_date ? parseInt(String(m.release_date).split('-')[0]) : 2024,
-  genre: [],
+  genre: getGenreNames(m.genre_ids ?? []),
   poster: poster(m.poster_path),
   backdrop: backdrop(m.backdrop_path),
   type: 'movie' as const,
   description: m.overview || '',
+})
+
+const transformHero = (m: TMDBMovie): HeroSlide => ({
+  id: String(m.id),
+  title: m.title || '',
+  description: m.overview || '',
+  rating: m.vote_average || 0,
+  year: m.release_date ? parseInt(String(m.release_date).split('-')[0]) : undefined,
+  tags: getGenreNames(m.genre_ids ?? []).slice(0, 4),
+  poster: poster(m.poster_path),
+  backdrop: backdrop(m.backdrop_path),
 })
 
 export default async function HomePage() {
@@ -37,11 +62,13 @@ export default async function HomePage() {
     getNowPlaying(),
   ])
 
+  const heroSlides = trending.results.slice(0, 4).map(transformHero)
+
   return (
     <>
       <Navbar />
       <main style={{ paddingTop: 0 }}>
-        <HeroSection />
+        <HeroSection slides={heroSlides} />
         
         <ContentRow
           title={<>🔥 Trending This Week</>}
@@ -73,8 +100,6 @@ export default async function HomePage() {
           items={anime.results.slice(0, 10).map(transformMovie)}
           tabs={['Popular', 'New Season', 'Action', 'Romance', 'Fantasy']}
         />
-
-        <SportsRow />
       </main>
       <Footer />
     </>

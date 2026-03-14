@@ -10,6 +10,20 @@ interface Props {
 }
 
 const WIDTHS = { sm: 140, md: 175, lg: 230, wide: 290 }
+const FALLBACK_IMG = `data:image/svg+xml;utf8,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600" viewBox="0 0 400 600">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#121826"/>
+        <stop offset="100%" stop-color="#0b0f1a"/>
+      </linearGradient>
+    </defs>
+    <rect width="400" height="600" fill="url(#g)"/>
+    <text x="50%" y="50%" fill="#5b6475" font-size="20" font-family="sans-serif" text-anchor="middle">
+      No image
+    </text>
+  </svg>`
+)}`
 
 export default function ContentCard({ item, size = 'md', showProgress, rank }: Props) {
   const isWide = size === 'wide'
@@ -17,6 +31,7 @@ export default function ContentCard({ item, size = 'md', showProgress, rank }: P
   const aspect = isWide ? '16/9' : '2/3'
   const imgW = isWide ? 400 : 200
   const imgH = isWide ? 225 : 300
+  const imgSrc = (isWide ? item.backdrop || item.poster : item.poster || item.backdrop) || FALLBACK_IMG
 
   const badgeBg: Record<string, string> = {
     red: '#e50914', blue: '#1a6dff', gold: '#f5c518',
@@ -52,7 +67,7 @@ export default function ContentCard({ item, size = 'md', showProgress, rank }: P
       )}
 
       <img
-        src={`https://picsum.photos/seed/${item.seed}/${imgW}/${imgH}`}
+        src={imgSrc}
         alt={item.title}
         loading="lazy"
         style={{

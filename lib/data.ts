@@ -4,10 +4,13 @@
 export interface ContentItem {
   id: string
   title: string
-  seed: string
+  seed?: string
   rating: number
   year: number
   genre: string[]
+  poster?: string | null
+  backdrop?: string | null
+  description?: string | null
   badge?: string
   badgeColor?: 'red' | 'blue' | 'gold'
   progress?: number   // for Continue Watching (0-100)
@@ -24,6 +27,21 @@ export interface SportEvent {
   status: 'LIVE' | 'TODAY' | 'FT' | 'TOMORROW'
   seed: string
   sport: 'football' | 'basketball' | 'tennis' | 'f1' | 'mma'
+}
+
+export interface HeroSlide {
+  id: string
+  title: string
+  subtitle?: string
+  description?: string
+  seed?: string
+  rating?: number
+  year?: number
+  runtime?: string
+  pg?: string
+  tags?: string[]
+  poster?: string | null
+  backdrop?: string | null
 }
 
 export const HERO_SLIDES = [

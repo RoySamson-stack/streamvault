@@ -1,23 +1,31 @@
 'use client'
 // components/HeroSection.tsx
 import { useState, useEffect } from 'react'
-import { HERO_SLIDES } from '@/lib/data'
+import { HERO_SLIDES, HeroSlide } from '@/lib/data'
 
-export default function HeroSection() {
+export default function HeroSection({ slides }: { slides?: HeroSlide[] }) {
+  const activeSlides = slides && slides.length > 0 ? slides : HERO_SLIDES
   const [current, setCurrent] = useState(0)
   const [animating, setAnimating] = useState(false)
 
   useEffect(() => {
-    const t = setInterval(() => changeTo((current + 1) % HERO_SLIDES.length), 8000)
+    const t = setInterval(() => changeTo((current + 1) % activeSlides.length), 8000)
     return () => clearInterval(t)
-  }, [current])
+  }, [current, activeSlides.length])
 
   function changeTo(i: number) {
     setAnimating(true)
     setTimeout(() => { setCurrent(i); setAnimating(false) }, 250)
   }
 
-  const slide = HERO_SLIDES[current]
+  const slide = activeSlides[current]
+  const bgImage = slide?.backdrop || slide?.poster
+  const metaBits = [
+    slide?.rating ? `★ ${slide.rating}` : null,
+    slide?.year ? String(slide.year) : null,
+    slide?.runtime || null,
+    slide?.pg || null,
+  ].filter(Boolean) as string[]
 
   return (
     <section style={{
@@ -47,8 +55,10 @@ export default function HeroSection() {
       {/* Poster image (right side) */}
       <div key={slide.id} style={{
         position: 'absolute', right: 0, top: 0, bottom: 0, width: '55%',
-        background: `linear-gradient(to left,rgba(8,8,16,0) 0%,rgba(8,8,16,.5) 40%,rgba(8,8,16,.95) 70%,#080810 100%),
-                     url('https://picsum.photos/seed/${slide.seed}/900/700') center/cover no-repeat`,
+        background: bgImage
+          ? `linear-gradient(to left,rgba(8,8,16,0) 0%,rgba(8,8,16,.5) 40%,rgba(8,8,16,.95) 70%,#080810 100%),
+             url('${bgImage}') center/cover no-repeat`
+          : 'linear-gradient(135deg,#0a0010 0%,#100020 35%,#1a0a00 70%,#0a0010 100%)',
         transition: 'opacity .3s',
         opacity: animating ? 0 : 1,
       }} />
@@ -96,28 +106,35 @@ export default function HeroSection() {
         </h1>
 
         {/* Meta */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12, fontSize: 13, color: 'var(--muted)' }}>
-          <span style={{ color: 'var(--gold)', fontWeight: 600 }}>★ {slide.rating}</span>
-          <Dot /><span>{slide.year}</span>
-          <Dot /><span>{slide.runtime}</span>
-          <Dot /><span>{slide.pg}</span>
-        </div>
+        {metaBits.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12, fontSize: 13, color: 'var(--muted)' }}>
+            {metaBits.map((m, i) => (
+              <span key={m + i} style={i === 0 && m.startsWith('★') ? { color: 'var(--gold)', fontWeight: 600 } : undefined}>
+                {i > 0 && <Dot />} {m}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Tags */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-          {slide.tags.map(t => (
-            <span key={t} style={{
-              background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.1)',
-              borderRadius: 20, padding: '3px 12px', fontSize: 11, color: 'var(--muted)', fontWeight: 500,
-            }}>{t}</span>
-          ))}
-        </div>
+        {slide.tags && slide.tags.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+            {slide.tags.map(t => (
+              <span key={t} style={{
+                background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.1)',
+                borderRadius: 20, padding: '3px 12px', fontSize: 11, color: 'var(--muted)', fontWeight: 500,
+              }}>{t}</span>
+            ))}
+          </div>
+        )}
 
         {/* Description */}
-        <p style={{
-          fontSize: 14, color: 'rgba(255,255,255,.6)', lineHeight: 1.7,
-          marginBottom: 28, maxWidth: 460,
-        }}>{slide.description}</p>
+        {slide.description && (
+          <p style={{
+            fontSize: 14, color: 'rgba(255,255,255,.6)', lineHeight: 1.7,
+            marginBottom: 28, maxWidth: 460,
+          }}>{slide.description}</p>
+        )}
 
         {/* CTA Buttons */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
@@ -150,7 +167,7 @@ export default function HeroSection() {
 
         {/* Slide dots */}
         <div style={{ display: 'flex', gap: 6 }}>
-          {HERO_SLIDES.map((_, i) => (
+          {activeSlides.map((_, i) => (
             <button key={i} onClick={() => changeTo(i)} style={{
               width: i === current ? 36 : 24, height: 3, borderRadius: 2, border: 'none',
               background: i === current ? 'var(--accent)' : 'rgba(255,255,255,.25)',
