@@ -1,6 +1,6 @@
 'use client'
 // components/ContentRow.tsx
-import { useRef, ReactNode } from 'react'
+import { useRef, ReactNode, useMemo, useState } from 'react'
 import { ContentItem } from '@/lib/data'
 import ContentCard from './ContentCard'
 
@@ -16,6 +16,15 @@ interface Props {
 
 export default function ContentRow({ title, items, cardSize = 'md', showProgress, showRank, pill, tabs }: Props) {
   const rowRef = useRef<HTMLDivElement>(null)
+  const [activeTab, setActiveTab] = useState(tabs?.[0] || 'All')
+
+  const visibleItems = useMemo(() => {
+    if (!tabs || activeTab.toLowerCase() === 'all') return items
+    const needle = activeTab.toLowerCase()
+    return items.filter(item =>
+      (item.genre || []).some(g => g.toLowerCase() === needle || g.toLowerCase().includes(needle))
+    )
+  }, [items, tabs, activeTab])
 
   function scroll(dir: number) {
     rowRef.current?.scrollBy({ left: dir * 360, behavior: 'smooth' })
@@ -47,7 +56,7 @@ export default function ContentRow({ title, items, cardSize = 'md', showProgress
 
       {/* Optional tabs */}
       {tabs && (
-        <GenreTabs tabs={tabs} />
+        <GenreTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
       )}
 
       {/* Carousel */}
@@ -58,7 +67,7 @@ export default function ContentRow({ title, items, cardSize = 'md', showProgress
           className="no-scrollbar"
           style={{ display: 'flex', gap: 14, overflowX: 'auto', scrollSnapType: 'x mandatory', paddingBottom: 8 }}
         >
-          {items.map((item, i) => (
+          {visibleItems.map((item, i) => (
             <div key={item.id} style={{ scrollSnapAlign: 'start' }}>
               <ContentCard item={item} size={cardSize} showProgress={showProgress} rank={showRank ? i + 1 : undefined} />
               {showProgress && item.episode && (
@@ -100,27 +109,15 @@ function CarouselButton({ dir, onClick }: { dir: number; onClick: () => void }) 
   )
 }
 
-function GenreTabs({ tabs }: { tabs: string[] }) {
-  const ref = useRef<number>(0)
-
+function GenreTabs({ tabs, active, onChange }: { tabs: string[]; active: string; onChange: (t: string) => void }) {
   return (
-    <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,.05)', borderRadius: 10, padding: 4, width: 'fit-content', marginBottom: 22 }}
-      onClick={e => {
-        const el = e.target as HTMLElement
-        if (!el.dataset.tab) return
-        const parent = el.parentElement!
-        parent.querySelectorAll<HTMLElement>('[data-tab]').forEach(t => {
-          t.style.background = 'transparent'; t.style.color = 'var(--muted)'
-        })
-        el.style.background = 'var(--accent)'; el.style.color = '#fff'
-      }}
-    >
+    <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,.05)', borderRadius: 10, padding: 4, width: 'fit-content', marginBottom: 22 }}>
       {tabs.map((tab, i) => (
-        <button key={tab} data-tab={tab} style={{
+        <button key={tab} data-tab={tab} onClick={() => onChange(tab)} style={{
           padding: '7px 18px', borderRadius: 7, fontSize: 12, fontWeight: 500,
           cursor: 'pointer', border: 'none', fontFamily: "'Outfit', sans-serif",
-          background: i === 0 ? 'var(--accent)' : 'transparent',
-          color: i === 0 ? '#fff' : 'var(--muted)',
+          background: tab === active ? 'var(--accent)' : 'transparent',
+          color: tab === active ? '#fff' : 'var(--muted)',
           transition: 'all .2s',
         }}>{tab}</button>
       ))}

@@ -1,6 +1,7 @@
 'use client'
 // components/ContentCard.tsx
 import { ContentItem } from '@/lib/data'
+import { useRouter } from 'next/navigation'
 
 interface Props {
   item: ContentItem
@@ -26,12 +27,19 @@ const FALLBACK_IMG = `data:image/svg+xml;utf8,${encodeURIComponent(
 )}`
 
 export default function ContentCard({ item, size = 'md', showProgress, rank }: Props) {
+  const router = useRouter()
   const isWide = size === 'wide'
   const w = WIDTHS[size]
   const aspect = isWide ? '16/9' : '2/3'
   const imgW = isWide ? 400 : 200
   const imgH = isWide ? 225 : 300
   const imgSrc = (isWide ? item.backdrop || item.poster : item.poster || item.backdrop) || FALLBACK_IMG
+  const typeParam = item.type === 'series' ? 'tv' : item.type
+
+  const goToWatch = () => {
+    if (item.type === 'sport') return
+    router.push(`/watch/${item.id}?type=${typeParam}`)
+  }
 
   const badgeBg: Record<string, string> = {
     red: '#e50914', blue: '#1a6dff', gold: '#f5c518',
@@ -41,6 +49,7 @@ export default function ContentCard({ item, size = 'md', showProgress, rank }: P
   return (
     <div
       style={{ flexShrink: 0, width: w, borderRadius: 10, overflow: 'hidden', cursor: 'pointer', position: 'relative', transition: 'transform .25s, box-shadow .25s' }}
+      onClick={goToWatch}
       onMouseEnter={e => {
         const el = e.currentTarget
         el.style.transform = 'scale(1.05)'
@@ -94,7 +103,9 @@ export default function ContentCard({ item, size = 'md', showProgress, rank }: P
         opacity: 0, transition: 'opacity .25s',
         display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 14,
       }}>
-        <button style={{
+        <button
+        onClick={e => { e.stopPropagation(); goToWatch() }}
+        style={{
           width: 40, height: 40, borderRadius: '50%',
           background: 'rgba(229,9,20,.9)', border: 'none',
           display: 'flex', alignItems: 'center', justifyContent: 'center',

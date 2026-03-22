@@ -1,6 +1,6 @@
 # streamvault
 
-# StreamVault 🎬
+# StreamVault
 
 > Netflix-level streaming platform frontend built with **Next.js 14**, **TypeScript**, and **Supabase Auth**.
 

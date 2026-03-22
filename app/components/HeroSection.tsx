@@ -1,26 +1,14 @@
 'use client'
 // components/HeroSection.tsx
 import { useState, useEffect } from 'react'
-import { HERO_SLIDES } from '@/lib/data'
-
-interface HeroSlide {
-  id: string
-  title: string
-  subtitle?: string
-  description?: string
-  rating?: number
-  year?: number
-  runtime?: string
-  pg?: string
-  tags?: string[]
-  poster?: string | null
-  backdrop?: string | null
-}
+import { HERO_SLIDES, HeroSlide } from '@/lib/data'
+import { useRouter } from 'next/navigation'
 
 export default function HeroSection({ slides }: { slides?: HeroSlide[] }) {
-  const activeSlides: HeroSlide[] = slides && slides.length > 0 ? slides : []
+  const activeSlides: HeroSlide[] = slides && slides.length > 0 ? slides : HERO_SLIDES
   const [current, setCurrent] = useState(0)
   const [animating, setAnimating] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     const t = setInterval(() => changeTo((current + 1) % activeSlides.length), 8000)
@@ -44,11 +32,12 @@ export default function HeroSection({ slides }: { slides?: HeroSlide[] }) {
   return (
     <section style={{
       position: 'relative',
-      height: '70vh',           // ← reduced from 92vh
+      height: 'calc(70vh + var(--nav-h))',
       minHeight: 460,
       display: 'flex',
       alignItems: 'flex-end',
       overflow: 'hidden',
+      paddingTop: 'var(--nav-h)',
     }}>
       {/* Animated background orbs */}
       <div style={{
@@ -161,6 +150,7 @@ export default function HeroSection({ slides }: { slides?: HeroSlide[] }) {
           }}
           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#ff1a25'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)' }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--accent)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)' }}
+          onClick={() => slide?.id && router.push(`/watch/${slide.id}?type=movie`)}
           >
             ▶ Play Now
           </button>

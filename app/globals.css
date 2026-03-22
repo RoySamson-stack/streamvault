@@ -38,3 +38,8 @@ body {
 
 /* Utility */
 .font-display { font-family: 'Bebas Neue', sans-serif; }
+
+/* Animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
