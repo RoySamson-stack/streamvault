@@ -578,7 +578,7 @@ export default function HomePage() {
             </div>
             <div style={{ marginTop: 20, border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', background: '#000' }}>
               <iframe key={iframeKey} ref={iframeRef} src={embedUrl} style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
-                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; allowfullscreen" referrerPolicy="no-referrer" allowFullScreen
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; allowfullscreen" allowFullScreen
                 onLoad={() => setLoading(false)} />
             </div>
           </div>

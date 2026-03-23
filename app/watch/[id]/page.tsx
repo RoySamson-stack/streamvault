@@ -25,9 +25,10 @@ interface Provider {
 const providers: Provider[] = [
   { name: 'VidBinge', build: (t, id, s, e) => t === 'movie' ? `https://vidbinge.to/movie/${id}` : `https://vidbinge.to/tv/${id}/${s || 1}/${e || 1}`, testUrl: 'https://vidbinge.to' },
   { name: 'VidSrc.to', build: (t, id, s, e) => t === 'movie' ? `https://vidsrc.to/embed/movie/${id}` : `https://vidsrc.to/embed/tv/${id}/${s || 1}/${e || 1}`, testUrl: 'https://vidsrc.to' },
-  { name: 'CinePlex', build: (t, id, s, e) => t === 'movie' ? `https://vidsrcme.ru/embed/movie?tmdb=${id}` : `https://vidsrcme.ru/embed/tv?tmdb=${id}&season=${s || 1}&episode=${e || 1}`, testUrl: 'https://vidsrcme.ru' },
-  { name: 'StreamHub', build: (t, id, s, e) => t === 'movie' ? `https://vembed.stream/play/${id}` : `https://vembed.stream/play/${id}?s=${s || 1}&e=${e || 1}`, testUrl: 'https://vembed.stream' },
-  { name: '2Embed', build: (t, id, s, e) => t === 'movie' ? `https://www.2embed.cc/embed/${id}` : `https://www.2embed.cc/embed/${id}?season=${s || 1}&episode=${e || 1}`, testUrl: 'https://www.2embed.cc' },
+  { name: 'vidsrcme', build: (t, id, s, e) => t === 'movie' ? `https://vidsrcme.ru/embed/movie?tmdb=${id}` : `https://vidsrcme.ru/embed/tv?tmdb=${id}&season=${s || 1}&episode=${e || 1}`, testUrl: 'https://vidsrcme.ru' },
+  { name: 'vembed', build: (t, id, s, e) => t === 'movie' ? `https://vembed.stream/play/${id}` : `https://vembed.stream/play/${id}?s=${s || 1}&e=${e || 1}`, testUrl: 'https://vembed.stream' },
+  { name: 'MoviePla', build: (t, id, s, e) => t === 'movie' ? `https://moviepla.net/embed/${id}` : `https://moviepla.net/embed/${id}?season=${s || 1}&episode=${e || 1}`, testUrl: 'https://moviepla.net' },
+  { name: '123Movies', build: (t, id, s, e) => t === 'movie' ? `https://www.123movies.life/embed/${id}` : `https://www.123movies.life/embed/${id}?season=${s || 1}&episode=${e || 1}`, testUrl: 'https://www.123movies.life' },
 ]
 
 export default function WatchPage({ params }: { params: { id: string } }) {
@@ -43,7 +44,9 @@ export default function WatchPage({ params }: { params: { id: string } }) {
   const [playing, setPlaying] = useState(false)
   const [prog, setProg] = useState(0)
   const [toastMsg, setToastMsg] = useState('')
+  const [loading, setLoading] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const iframeKeyRef = useRef(0)
   const testedRef = useRef(new Set())
 
   useEffect(() => {
@@ -92,6 +95,8 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     if (movie) {
       const url = providers[currentProvider]?.build(movie.type, movie.id) || ''
       setEmbedUrl(url)
+      iframeKeyRef.current += 1
+      setLoading(true)
       providers.forEach((_, i) => testProvider(i))
     }
   }, [movie])
@@ -171,16 +176,20 @@ export default function WatchPage({ params }: { params: { id: string } }) {
           </div>
         </nav>
 
-        <div className="player-area" onClick={() => { setPlaying(true); showToast('Loading stream...') }}>
+        <div className="player-area" onClick={() => { setPlaying(true); setLoading(true) }}>
           <div className="player-bg">
             {movie?.backdrop && <img src={movie.backdrop} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }} />}
           </div>
           {!playing && (
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, zIndex: 10 }}>
-              <div className="play-btn">
-                <svg viewBox="0 0 24 24" style={{ width: 30, height: 30, fill: '#e8c96d', marginLeft: 4 }}><path d="M5 3l14 9-14 9V3z"/></svg>
-              </div>
-              <span style={{ fontSize: 13, color: 'rgba(240,242,245,0.7)', textTransform: 'uppercase', letterSpacing: 1 }}>Press to Play</span>
+              {loading ? (
+                <div className="spinner" />
+              ) : (
+                <div className="play-btn">
+                  <svg viewBox="0 0 24 24" style={{ width: 30, height: 30, fill: '#e8c96d', marginLeft: 4 }}><path d="M5 3l14 9-14 9V3z"/></svg>
+                </div>
+              )}
+              <span style={{ fontSize: 13, color: 'rgba(240,242,245,0.7)', textTransform: 'uppercase', letterSpacing: 1 }}>{loading ? 'Loading...' : 'Press to Play'}</span>
             </div>
           )}
           <div className="controls">
@@ -220,7 +229,7 @@ export default function WatchPage({ params }: { params: { id: string } }) {
           <h3 style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 2, color: '#6b7a94', marginBottom: 16, fontWeight: 600 }}>Streaming Sources</h3>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {providers.map((p, i) => (
-              <button key={p.name} className={`provider-btn ${i === currentProvider ? 'active' : ''}`} onClick={() => setCurrentProvider(i)}>
+              <button key={p.name} className={`provider-btn ${i === currentProvider ? 'active' : ''}`} onClick={() => { setCurrentProvider(i); iframeKeyRef.current += 1; setLoading(true) }}>
                 <span>{p.name}</span>
                 {providerStates[i]?.status === 'ready' && <span style={{ fontSize: 10, color: '#4ade80' }}>✓</span>}
                 {providerStates[i]?.status === 'testing' && <span style={{ fontSize: 10, color: '#f5c518' }}>⚡</span>}
@@ -228,8 +237,8 @@ export default function WatchPage({ params }: { params: { id: string } }) {
             ))}
           </div>
           <div style={{ marginTop: 20, borderRadius: 8, overflow: 'hidden', background: '#000', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <iframe ref={iframeRef} src={embedUrl} style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
-              allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerPolicy="no-referrer" />
+            <iframe key={iframeKeyRef.current} ref={iframeRef} src={embedUrl} style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen onLoad={() => setLoading(false)} />
           </div>
         </div>
 
