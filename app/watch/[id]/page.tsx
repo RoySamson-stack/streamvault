@@ -11,19 +11,12 @@ interface Provider {
 
 const providers: Provider[] = [
   {
-    name: 'Superflix',
-    build: (t, id, s, e) => `https://player.superflix.link/embed/${t === 'movie' ? 'movie' : 'tv'}/${id}${t === 'tv' ? `/${s || 1}/${e || 1}` : ''}`,
-    testUrl: 'https://player.superflix.link',
-  },
-  {
-    name: 'VidLink',
-    build: (t, id, s, e) => `https://vidlink.pro/?video=${t === 'movie' ? 'movie' : 'tv'}/${id}${t === 'tv' ? `&season=${s || 1}&episode=${e || 1}` : ''}`,
-    testUrl: 'https://vidlink.pro',
-  },
-  {
-    name: 'ZxcStream',
-    build: (t, id, s, e) => `https://vixcloud.co/embed/${id}${t === 'tv' ? `?s=${s || 1}&e=${e || 1}` : ''}`,
-    testUrl: 'https://vixcloud.co',
+    name: 'VidBinge',
+    build: (t, id, s, e) =>
+      t === 'movie'
+        ? `https://vidbinge.to/movie/${id}`
+        : `https://vidbinge.to/tv/${id}/${s || 1}/${e || 1}`,
+    testUrl: 'https://vidbinge.to',
   },
   {
     name: 'VidSrc.to',
@@ -34,45 +27,28 @@ const providers: Provider[] = [
     testUrl: 'https://vidsrc.to',
   },
   {
-    name: 'VidSrc.me',
+    name: 'CinePlex',
     build: (t, id, s, e) =>
       t === 'movie'
-        ? `https://vidsrc.me/embed/movie?tmdb=${id}`
-        : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s || 1}&episode=${e || 1}`,
-    testUrl: 'https://vidsrc.me',
+        ? `https://vidsrcme.ru/embed/movie?tmdb=${id}`
+        : `https://vidsrcme.ru/embed/tv?tmdb=${id}&season=${s || 1}&episode=${e || 1}`,
+    testUrl: 'https://vidsrcme.ru',
   },
   {
-    name: 'VidSrc.net',
+    name: 'StreamHub',
     build: (t, id, s, e) =>
       t === 'movie'
-        ? `https://vidsrc.net/embed/movie/${id}`
-        : `https://vidsrc.net/embed/tv/${id}/${s || 1}/${e || 1}`,
-    testUrl: 'https://vidsrc.net',
+        ? `https://vembed.stream/play/${id}`
+        : `https://vembed.stream/play/${id}?s=${s || 1}&e=${e || 1}`,
+    testUrl: 'https://vembed.stream',
   },
   {
-    name: 'Smashy',
-    build: (t, id, s, e) => `https://smashystream.com/embed/${t === 'movie' ? 'movies' : 'series'}/${id}${t === 'tv' ? `-${s || 1}x${e || 1}` : ''}`,
-    testUrl: 'https://smashystream.com',
-  },
-  {
-    name: 'RushFilm',
-    build: (t, id, s, e) => `https://rushfilm.net/embed/${t === 'movie' ? 'film' : 'serial'}/${id}${t === 'tv' ? `/${s || 1}-${e || 1}` : ''}`,
-    testUrl: 'https://rushfilm.net',
-  },
-  {
-    name: 'FlixHQ',
-    build: (t, id, s, e) => `https://flixhq.tel:8080/embed/${t === 'movie' ? 'movies' : 'shows'}/${id}${t === 'tv' ? `-${s || 1}-${e || 1}` : ''}`,
-    testUrl: 'https://flixhq.tel',
-  },
-  {
-    name: 'AutoEmbed',
-    build: (t, id, s, e) => `https://autoembed.co/${t === 'movie' ? 'movie' : 'tv'}-embed/${id}${t === 'tv' ? `/season-${s || 1}/episode-${e || 1}` : ''}`,
-    testUrl: 'https://autoembed.co',
-  },
-  {
-    name: 'SuperStream',
-    build: (t, id, s, e) => `https://supercaster.top/embed/${t === 'movie' ? 'film' : 'series'}/${id}${t === 'tv' ? `-${s || 1}x${e || 1}` : ''}`,
-    testUrl: 'https://supercaster.top',
+    name: '2Embed',
+    build: (t, id, s, e) =>
+      t === 'movie'
+        ? `https://www.2embed.cc/embed/${id}`
+        : `https://www.2embed.cc/embed/${id}?season=${s || 1}&episode=${e || 1}`,
+    testUrl: 'https://www.2embed.cc',
   },
 ]
 
@@ -211,7 +187,7 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     <div style={styles.container}>
       <div style={styles.header}>
         <div style={styles.headerLeft}>
-          <h1 style={styles.title}>Corncastle Player</h1>
+          <h1 style={styles.title}>StreamVault Player</h1>
           {autoMode && <span style={styles.autoBadge}>AUTO</span>}
           {readyCount > 0 && (
             <span style={styles.stats}>{readyCount}/{providers.length} sources ready</span>
@@ -245,9 +221,8 @@ export default function WatchPage({ params }: { params: { id: string } }) {
           width="100%"
           height="100%"
           style={styles.iframe}
-          allowFullScreen
-          allow="autoplay; fullscreen; picture-in-picture"
-          referrerPolicy="no-referrer-when-downgrade"
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+          referrerPolicy="no-referrer"
           onLoad={handleIframeLoad}
           onError={handleIframeError}
         />
@@ -289,6 +264,12 @@ export default function WatchPage({ params }: { params: { id: string } }) {
           Open in new tab ↗
         </a>
       </div>
+
+      {readyCount === 0 && allTested && (
+        <div style={styles.errorBox}>
+          <strong>No sources available.</strong> If you have an ad blocker (uBlock, AdBlock, Privacy Badger), try disabling it for this site — these streaming sources are often blocked.
+        </div>
+      )}
     </div>
   )
 }
@@ -322,6 +303,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 18,
     fontWeight: 600,
     margin: 0,
+    color: '#e50914',
   },
   autoBadge: {
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -491,5 +473,15 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
     textDecoration: 'none',
     opacity: 0.7,
+  },
+  errorBox: {
+    marginTop: 20,
+    padding: '16px 20px',
+    background: 'rgba(239, 68, 68, 0.1)',
+    border: '1px solid rgba(239, 68, 68, 0.3)',
+    borderRadius: 8,
+    fontSize: 13,
+    color: '#fca5a5',
+    textAlign: 'center',
   },
 }
