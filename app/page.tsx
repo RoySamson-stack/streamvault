@@ -83,6 +83,7 @@ export default function HomePage() {
   const [toastType, setToastType] = useState('')
   const [watchHistory, setWatchHistory] = useState<WatchHistoryItem[]>([])
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const playerVideoRef = useRef<HTMLDivElement>(null)
   const testedRef = useRef(new Set())
 
   const transformMovie = (m: Movie): ContentItem => ({
@@ -192,6 +193,26 @@ export default function HomePage() {
       setEmbedUrl(providers[currentProvider]?.build(selectedMovie.type, selectedMovie.id) || '')
     }
   }, [currentProvider, selectedMovie])
+
+  const toggleFullscreen = () => {
+    const el = playerVideoRef.current
+    if (!el) return
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      el.requestFullscreen?.()
+    }
+  }
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      if (playerVideoRef.current) {
+        playerVideoRef.current.classList.toggle('is-fullscreen', !!document.fullscreenElement)
+      }
+    }
+    document.addEventListener('fullscreenchange', handleFsChange)
+    return () => document.removeEventListener('fullscreenchange', handleFsChange)
+  }, [])
 
   const goToPage = (page: string) => {
     setCurrentPage(page)
@@ -462,7 +483,7 @@ export default function HomePage() {
       {/* PLAYER PAGE */}
       <div className={`page ${currentPage === 'player' ? 'active' : ''}`} id="page-player">
         <div className="player-wrap">
-          <div className={`player-video-area ${playing ? 'playing' : ''}`} style={{ cursor: 'pointer' }}>
+          <div className={`player-video-area ${playing ? 'playing' : ''}`} ref={playerVideoRef} style={{ cursor: 'pointer' }}>
             <div className="player-fake-video">
               {selectedMovie?.backdrop && <img src={selectedMovie.backdrop} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }} />}
             </div>
@@ -487,7 +508,7 @@ export default function HomePage() {
                 <span className="time-disp">38:14 / 1:58:22</span>
                 <div className="ctrl-spacer"></div>
                 <span className="quality-btn">1080p</span>
-                <button className="ctrl-btn" title="Fullscreen"><svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
+                <button className="ctrl-btn" title="Fullscreen" onClick={toggleFullscreen}><svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
               </div>
             </div>
           </div>
@@ -526,8 +547,8 @@ export default function HomePage() {
               ))}
             </div>
             <div style={{ marginTop: 20, border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', background: '#000' }}>
-              <iframe ref={iframeRef} src={embedUrl} style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
-                allow="autoplay; fullscreen; picture-in-picture; encrypted-media" referrerPolicy="no-referrer" />
+              <iframe key={embedUrl} ref={iframeRef} src={embedUrl} style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; allowfullscreen" referrerPolicy="no-referrer" allowFullScreen />
             </div>
           </div>
         </div>
