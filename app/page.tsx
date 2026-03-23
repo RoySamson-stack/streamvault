@@ -106,6 +106,10 @@ export default function HomePage() {
     if (saved) setWatchHistory(JSON.parse(saved))
   }, [])
 
+  useEffect(() => {
+    providers.forEach((_, i) => testProvider(i))
+  }, [])
+
   const updateWatchHistory = (item: ContentItem, progress: number) => {
     const newHistory = watchHistory.filter(h => h.id !== item.id)
     newHistory.unshift({
@@ -176,21 +180,12 @@ export default function HomePage() {
     if (ready.length > 0) setCurrentProvider(ready[0].index)
   }
 
-  useEffect(() => {
-    if (selectedMovie) {
-      const url = providers[currentProvider]?.build(selectedMovie.type, selectedMovie.id) || ''
-      setEmbedUrl(url)
-      setIframeKey(k => k + 1)
-      setLoading(true)
-      providers.forEach((_, i) => testProvider(i))
-      window.location.hash = `watch/${selectedMovie.id}`
-    }
-  }, [selectedMovie])
-
+  const fastestSelectedRef = useRef(false)
   useEffect(() => {
     const readyCount = Object.values(providerStates).filter(s => s?.status === 'ready').length
-    if (readyCount > 0) {
+    if (readyCount > 0 && !fastestSelectedRef.current) {
       selectFastest()
+      fastestSelectedRef.current = true
     }
   }, [providerStates])
 
@@ -569,7 +564,7 @@ export default function HomePage() {
             <h3>Streaming Sources</h3>
             <div className="cards-scroll" style={{ gap: 8 }}>
               {providers.map((p, i) => (
-                <button key={p.name} onClick={() => { setCurrentProvider(i); setIframeKey(k => k + 1); setLoading(true) }} style={{
+                <button key={p.name} onClick={() => { setCurrentProvider(i); setLoading(true) }} style={{
                   padding: '8px 14px', borderRadius: 6,
                   border: i === currentProvider ? '1px solid var(--accent)' : '1px solid var(--border)',
                   background: i === currentProvider ? 'rgba(232,201,109,0.15)' : 'var(--surface2)',
