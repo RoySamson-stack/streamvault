@@ -16,7 +16,7 @@ interface ContentItem {
   description: string
 }
 
-  const providers = [
+const providers = [
   { name: 'zxcstream', build: (t: string, id: string, s?: string, e?: string) => 
     t === 'movie' ? `https://zxcstream.xyz/player/movie/${id}/en?autoplay=false&back=true&server=0` : `https://zxcstream.xyz/player/tv/${id}/${s || 1}/${e || 1}/en?autoplay=false&back=true&server=0` },
   { name: 'Frembed', build: (t: string, id: string, s?: string, e?: string) => 
