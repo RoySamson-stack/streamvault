@@ -16,9 +16,9 @@ interface ContentItem {
   description: string
 }
 
-const providers = [
+  const providers = [
   { name: 'zxcstream', build: (t: string, id: string, s?: string, e?: string) => 
-    t === 'movie' ? `https://zxcstream.xyz/embed/movie/${id}` : `https://zxcstream.xyz/embed/tv/${id}/${s || 1}/${e || 1}` },
+    t === 'movie' ? `https://zxcstream.xyz/player/movie/${id}/en?autoplay=false&back=true&server=0` : `https://zxcstream.xyz/player/tv/${id}/${s || 1}/${e || 1}/en?autoplay=false&back=true&server=0` },
   { name: 'Frembed', build: (t: string, id: string, s?: string, e?: string) => 
     t === 'movie' ? `https://frembed.bond/embed/movie/${id}` : `https://frembed.bond/embed/tv/${id}/${s || 1}/${e || 1}` },
   { name: 'VidBinge', build: (t: string, id: string, s?: string, e?: string) => 
@@ -118,6 +118,10 @@ export default function WatchPage({ params }: { params: { id: string } }) {
       </nav>
 
       <div className="player-container">
+        <div
+          className="player-backdrop"
+          style={movie?.backdrop ? { backgroundImage: `url(${movie.backdrop})` } : undefined}
+        />
         {loading && (
           <div className="player-loading">
             <div className="spinner" />
@@ -129,7 +133,7 @@ export default function WatchPage({ params }: { params: { id: string } }) {
           src={embedUrl} 
           style={{ width: '100%', height: '100%', border: 'none' }}
           allowFullScreen
-          allow="autoplay; fullscreen; encrypted-media"
+          allow="autoplay; encrypted-media"
           onLoad={handleIframeLoad}
         />
       </div>

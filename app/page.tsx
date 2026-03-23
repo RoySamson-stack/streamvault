@@ -208,6 +208,14 @@ export default function HomePage() {
     }
   }, [currentProvider, selectedMovie])
 
+  useEffect(() => {
+    if (currentPage === 'player' && selectedMovie) {
+      setPlaying(true)
+      setLoading(true)
+      setIframeKey(k => k + 1)
+    }
+  }, [currentPage, selectedMovie])
+
   const toggleFullscreen = () => {
     const el = playerVideoRef.current
     if (!el) return
@@ -493,7 +501,22 @@ export default function HomePage() {
       {/* PLAYER PAGE */}
       <div className={`page ${currentPage === 'player' ? 'active' : ''}`} id="page-player">
         <div className="player-wrap">
-          <div className={`player-video-area ${playing ? 'playing' : ''}`} ref={playerVideoRef} style={{ cursor: 'pointer' }}>
+          <div className={`player-video-area ${playing ? 'playing' : ''} ${loading ? 'loading' : 'loaded'}`} ref={playerVideoRef} style={{ cursor: 'pointer' }}>
+            <iframe
+              key={iframeKey}
+              ref={iframeRef}
+              className="player-embed"
+              src={embedUrl}
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+              allowFullScreen
+              onLoad={() => setLoading(false)}
+              style={{ border: 'none' }}
+            />
+            {loading && (
+              <div className="player-loading">
+                <div className="spinner" />
+              </div>
+            )}
             <div className="player-fake-video">
               {selectedMovie?.backdrop && <img src={selectedMovie.backdrop} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }} />}
             </div>
@@ -573,9 +596,9 @@ export default function HomePage() {
               ))}
             </div>
             <div style={{ marginTop: 20, border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', background: '#000' }}>
-              <iframe key={iframeKey} ref={iframeRef} src={embedUrl} style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
-                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; allowfullscreen" allowFullScreen
-                onLoad={() => setLoading(false)} />
+              <div style={{ padding: 18, color: 'rgba(240,242,245,0.65)', fontSize: 13 }}>
+                Playback appears above. If a source fails, try another or open in a new tab.
+              </div>
             </div>
           </div>
         </div>
