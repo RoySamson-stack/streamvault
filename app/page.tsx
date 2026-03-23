@@ -89,6 +89,7 @@ export default function HomePage() {
   const testedRef = useRef(new Set())
   const [iframeKey, setIframeKey] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [isRestoring, setIsRestoring] = useState(true)
 
   const transformMovie = (m: Movie): ContentItem => ({
     id: String(m.id),
@@ -105,6 +106,16 @@ export default function HomePage() {
   useEffect(() => {
     const saved = localStorage.getItem('vaultsphere_watch_history')
     if (saved) setWatchHistory(JSON.parse(saved))
+
+    const savedPage = localStorage.getItem('vaultsphere_current_page')
+    const savedMovie = localStorage.getItem('vaultsphere_selected_movie')
+    if (savedPage && savedMovie) {
+      try {
+        setCurrentPage(savedPage)
+        setSelectedMovie(JSON.parse(savedMovie))
+      } catch (e) {}
+    }
+    setIsRestoring(false)
   }, [])
 
   useEffect(() => {
@@ -258,6 +269,8 @@ export default function HomePage() {
     const progress = existingProgress?.progress || 0
     setProg(progress)
     updateWatchHistory(item, 0)
+    localStorage.setItem('vaultsphere_current_page', 'player')
+    localStorage.setItem('vaultsphere_selected_movie', JSON.stringify(item))
     window.scrollTo(0, 0)
   }
 

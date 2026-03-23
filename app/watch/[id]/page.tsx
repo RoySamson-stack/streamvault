@@ -50,6 +50,8 @@ export default function WatchPage({ params }: { params: { id: string } }) {
   const iframeKeyRef = useRef(0)
   const testedRef = useRef(new Set())
   const fastestSwitchedRef = useRef(false)
+  const autoSwitchRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const providerIndexRef = useRef(0)
 
   useEffect(() => {
     async function fetchMovie() {
@@ -98,35 +100,28 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     setEmbedUrl(url)
     iframeKeyRef.current += 1
     setLoading(true)
+    providerIndexRef.current = currentProvider
     fastestSwitchedRef.current = false
     providers.forEach((_, i) => testProvider(i))
 
-    const timeout = setTimeout(() => {
-      setLoading(false)
-      const nextProvider = (currentProvider + 1) % providers.length
+    if (autoSwitchRef.current) clearTimeout(autoSwitchRef.current)
+    autoSwitchRef.current = setTimeout(() => {
+      const nextProvider = (providerIndexRef.current + 1) % providers.length
+      providerIndexRef.current = nextProvider
       setCurrentProvider(nextProvider)
-    }, 10000)
-    return () => clearTimeout(timeout)
-  }, [params.id, type, season, episode, currentProvider])
+      showToast(`Trying ${providers[nextProvider].name}...`)
+    }, 8000)
+  }, [params.id, type, season, episode])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const ready = providers
-        .map((_, i) => ({ index: i, state: providerStates[i] }))
-        .filter(p => p.state?.status === 'ready' && p.state.latency !== null)
-        .sort((a, b) => (a.state.latency || 999) - (b.state.latency || 999))
-      if (ready.length > 0 && !fastestSwitchedRef.current) {
-        const fastest = ready[0].index
-        if (fastest !== currentProvider) {
-          setCurrentProvider(fastest)
-          iframeKeyRef.current += 1
-          setLoading(true)
-        }
-        fastestSwitchedRef.current = true
-      }
-    }, 3000)
-    return () => clearTimeout(timer)
-  }, [providerStates, currentProvider])
+    if (autoSwitchRef.current) clearTimeout(autoSwitchRef.current)
+    autoSwitchRef.current = setTimeout(() => {
+      const nextProvider = (providerIndexRef.current + 1) % providers.length
+      providerIndexRef.current = nextProvider
+      setCurrentProvider(nextProvider)
+      showToast(`Trying ${providers[nextProvider].name}...`)
+    }, 8000)
+  }, [currentProvider])
 
   const showToast = (msg: string) => {
     setToastMsg(msg)
