@@ -193,7 +193,7 @@ export default function HomePage() {
     if (selectedMovie) {
       setEmbedUrl(providers[currentProvider]?.build(selectedMovie.type, selectedMovie.id) || '')
     }
-  }, [currentProvider])
+  }, [currentProvider, selectedMovie])
 
   const toggleFullscreen = () => {
     const el = playerVideoRef.current
@@ -251,6 +251,8 @@ export default function HomePage() {
     setSelectedMovie(item)
     setCurrentPage('player')
     setPlaying(false)
+    setIframeKey(k => k + 1)
+    setLoading(true)
     const existingProgress = watchHistory.find(h => h.id === item.id)
     const progress = existingProgress?.progress || 0
     setProg(progress)
@@ -516,6 +518,9 @@ export default function HomePage() {
                 )}
               </div>
               <span className="play-label">{loading ? 'Loading...' : playing ? 'Playing...' : 'Press to Play'}</span>
+              <button onClick={(e) => { e.stopPropagation(); window.open(embedUrl, '_blank') }} style={{ marginTop: 8, padding: '6px 16px', borderRadius: 6, border: '1px solid var(--accent)', background: 'rgba(232,201,109,0.1)', color: 'var(--accent)', cursor: 'pointer', fontSize: 12 }}>
+                Open in New Tab ↗
+              </button>
             </div>
             <div className="player-controls-overlay">
               <div className="player-progress"><div className="player-buffered" style={{ width: '78%' }}></div><div className="player-progress-fill" style={{ width: `${prog}%` }}></div></div>
@@ -554,6 +559,7 @@ export default function HomePage() {
               <div className="player-action-row">
                 <button className="btn btn-outline btn-sm btn-icon-sq" onClick={() => showToast('Added to Watchlist ✓', 'accent')}>♥</button>
                 <button className="btn btn-outline btn-sm btn-icon-sq" onClick={() => showToast('Link copied! ✓', 'accent')}>⤵</button>
+                <button className="btn btn-gold btn-sm" onClick={() => window.open(embedUrl, '_blank')} style={{ fontSize: 11, padding: '9px 16px' }}>↗ Open in New Tab</button>
               </div>
               <button className="btn btn-ghost" onClick={() => setCurrentPage('detail')} style={{ fontSize: 11, padding: '9px 16px' }}>View Details →</button>
               <button className="btn btn-ghost" onClick={() => goToPage('home')} style={{ fontSize: 11, padding: '9px 16px' }}>← Back to Home</button>
@@ -564,7 +570,7 @@ export default function HomePage() {
             <h3>Streaming Sources</h3>
             <div className="cards-scroll" style={{ gap: 8 }}>
               {providers.map((p, i) => (
-                <button key={p.name} onClick={() => { setCurrentProvider(i); setLoading(true) }} style={{
+                <button key={p.name} onClick={() => { setCurrentProvider(i); setIframeKey(k => k + 1); setLoading(true) }} style={{
                   padding: '8px 14px', borderRadius: 6,
                   border: i === currentProvider ? '1px solid var(--accent)' : '1px solid var(--border)',
                   background: i === currentProvider ? 'rgba(232,201,109,0.15)' : 'var(--surface2)',
