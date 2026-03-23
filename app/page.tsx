@@ -257,25 +257,10 @@ export default function HomePage() {
     const progress = existingProgress?.progress || 0
     setProg(progress)
     updateWatchHistory(item, 0)
-    window.location.hash = `watch/${item.id}`
     window.scrollTo(0, 0)
   }
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const hash = window.location.hash
-    if (hash.startsWith('#watch/')) {
-      const movieId = hash.replace('#watch/', '')
-      const foundMovie = trending.find(m => m.id === movieId) || popular.find(m => m.id === movieId) || topRated.find(m => m.id === movieId) || anime.find(m => m.id === movieId)
-      if (foundMovie) {
-        setSelectedMovie(foundMovie)
-        setCurrentPage('player')
-        setPlaying(false)
-        const existingProgress = watchHistory.find(h => h.id === foundMovie.id)
-        setProg(existingProgress?.progress || 0)
-      }
-    }
-  }, [trending, popular, topRated, anime])
+
 
   const showToast = (msg: string, type = '') => {
     setToastMsg(msg)
