@@ -261,18 +261,8 @@ export default function HomePage() {
   }
 
   const handleWatch = (item: ContentItem) => {
-    setSelectedMovie(item)
-    setCurrentPage('player')
-    setPlaying(false)
-    setIframeKey(k => k + 1)
-    setLoading(true)
-    const existingProgress = watchHistory.find(h => h.id === item.id)
-    const progress = existingProgress?.progress || 0
-    setProg(progress)
     updateWatchHistory(item, 0)
-    localStorage.setItem('vaultsphere_current_page', 'player')
-    localStorage.setItem('vaultsphere_selected_movie', JSON.stringify(item))
-    window.scrollTo(0, 0)
+    window.location.href = `/watch/${item.id}`
   }
 
 
@@ -352,7 +342,7 @@ export default function HomePage() {
                 Watch Now
               </button>
               <button className="btn btn-ghost" onClick={() => showToast('Added to Watchlist ✓', 'accent')}>+ Add to List</button>
-              <button className="btn btn-outline" onClick={() => { if (heroItem) { setSelectedMovie(heroItem); setCurrentPage('detail') } }}>More Info</button>
+              <button className="btn btn-outline" onClick={() => { if (heroItem) handleWatch(heroItem) }}>More Info</button>
             </div>
           </div>
         </div>
