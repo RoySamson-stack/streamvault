@@ -152,7 +152,10 @@ export default function HomePage() {
     setProviderStates(prev => ({ ...prev, [index]: { status: 'testing', latency: null } }))
     try {
       const start = performance.now()
-      await fetch(providers[index].testUrl, { method: 'HEAD', mode: 'no-cors' })
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 3000)
+      await fetch(providers[index].testUrl, { method: 'HEAD', mode: 'no-cors', signal: controller.signal })
+      clearTimeout(timeout)
       const latency = Math.round(performance.now() - start)
       setProviderStates(prev => ({ ...prev, [index]: { status: 'ready', latency } }))
       testedRef.current.add(index)
@@ -171,14 +174,17 @@ export default function HomePage() {
 
   useEffect(() => {
     if (selectedMovie) {
-      setEmbedUrl(providers[currentProvider]?.build(selectedMovie.type, selectedMovie.id) || '')
+      const url = providers[currentProvider]?.build(selectedMovie.type, selectedMovie.id) || ''
+      setEmbedUrl(url)
       providers.forEach((_, i) => testProvider(i))
     }
   }, [selectedMovie])
 
   useEffect(() => {
     const readyCount = Object.values(providerStates).filter(s => s?.status === 'ready').length
-    if (readyCount > 0) selectFastest()
+    if (readyCount > 0) {
+      selectFastest()
+    }
   }, [providerStates])
 
   useEffect(() => {
