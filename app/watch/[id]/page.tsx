@@ -48,6 +48,7 @@ export default function WatchPage({ params }: { params: { id: string } }) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const iframeKeyRef = useRef(0)
   const testedRef = useRef(new Set())
+  const fastestSwitchedRef = useRef(false)
 
   useEffect(() => {
     async function fetchMovie() {
@@ -96,25 +97,40 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     setEmbedUrl(url)
     iframeKeyRef.current += 1
     setLoading(true)
+    fastestSwitchedRef.current = false
     providers.forEach((_, i) => testProvider(i))
+
+    const timeout = setTimeout(() => {
+      setLoading(false)
+      const nextProvider = (currentProvider + 1) % providers.length
+      setCurrentProvider(nextProvider)
+    }, 10000)
+    return () => clearTimeout(timeout)
   }, [params.id, type, season, episode, currentProvider])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const ready = providers
+        .map((_, i) => ({ index: i, state: providerStates[i] }))
+        .filter(p => p.state?.status === 'ready' && p.state.latency !== null)
+        .sort((a, b) => (a.state.latency || 999) - (b.state.latency || 999))
+      if (ready.length > 0 && !fastestSwitchedRef.current) {
+        const fastest = ready[0].index
+        if (fastest !== currentProvider) {
+          setCurrentProvider(fastest)
+          iframeKeyRef.current += 1
+          setLoading(true)
+        }
+        fastestSwitchedRef.current = true
+      }
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [providerStates, currentProvider])
 
   const showToast = (msg: string) => {
     setToastMsg(msg)
     setTimeout(() => setToastMsg(''), 2800)
   }
-
-  const selectFastest = () => {
-    const ready = providers.map((_, i) => ({ index: i, state: providerStates[i] }))
-      .filter(p => p.state?.status === 'ready' && p.state.latency !== null)
-      .sort((a, b) => (a.state.latency || 999) - (b.state.latency || 999))
-    if (ready.length > 0) setCurrentProvider(ready[0].index)
-  }
-
-  useEffect(() => {
-    const readyCount = Object.values(providerStates).filter(s => s?.status === 'ready').length
-    if (readyCount > 0) selectFastest()
-  }, [providerStates])
 
 
 
@@ -194,7 +210,7 @@ export default function WatchPage({ params }: { params: { id: string } }) {
               </button>
               <button className="ctrl-btn" title="Previous"><svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
               <button className="ctrl-btn" title="Next"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
-              <span className="time-disp">38:14 / 1:58:22</span>
+              <span className="time-disp">{Math.floor(prog * 1.58)}:{String(Math.floor((prog * 94) % 60)).padStart(2, '0')} / {movie?.title ? 'HD' : '...'}</span>
               <div style={{ flex: 1 }}></div>
               <span className="quality-btn">1080p</span>
               <button className="ctrl-btn"><svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>

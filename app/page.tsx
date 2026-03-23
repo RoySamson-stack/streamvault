@@ -525,7 +525,7 @@ export default function HomePage() {
                   <button className="ctrl-btn" title="Mute"><svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>
                   <input type="range" className="vol-slider" min="0" max="100" defaultValue="75" />
                 </div>
-                <span className="time-disp">38:14 / 1:58:22</span>
+                <span className="time-disp">HD</span>
                 <div className="ctrl-spacer"></div>
                 <span className="quality-btn">1080p</span>
                 <button className="ctrl-btn" title="Fullscreen" onClick={toggleFullscreen}><svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
