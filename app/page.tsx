@@ -44,9 +44,10 @@ interface Provider {
 const providers: Provider[] = [
   { name: 'VidBinge', build: (t, id, s, e) => t === 'movie' ? `https://vidbinge.to/movie/${id}` : `https://vidbinge.to/tv/${id}/${s || 1}/${e || 1}`, testUrl: 'https://vidbinge.to' },
   { name: 'VidSrc.to', build: (t, id, s, e) => t === 'movie' ? `https://vidsrc.to/embed/movie/${id}` : `https://vidsrc.to/embed/tv/${id}/${s || 1}/${e || 1}`, testUrl: 'https://vidsrc.to' },
-  { name: 'CinePlex', build: (t, id, s, e) => t === 'movie' ? `https://vidsrcme.ru/embed/movie?tmdb=${id}` : `https://vidsrcme.ru/embed/tv?tmdb=${id}&season=${s || 1}&episode=${e || 1}`, testUrl: 'https://vidsrcme.ru' },
-  { name: 'StreamHub', build: (t, id, s, e) => t === 'movie' ? `https://vembed.stream/play/${id}` : `https://vembed.stream/play/${id}?s=${s || 1}&e=${e || 1}`, testUrl: 'https://vembed.stream' },
-  { name: '2Embed', build: (t, id, s, e) => t === 'movie' ? `https://www.2embed.cc/embed/${id}` : `https://www.2embed.cc/embed/${id}?season=${s || 1}&episode=${e || 1}`, testUrl: 'https://www.2embed.cc' },
+  { name: 'vidsrcme', build: (t, id, s, e) => t === 'movie' ? `https://vidsrcme.ru/embed/movie?tmdb=${id}` : `https://vidsrcme.ru/embed/tv?tmdb=${id}&season=${s || 1}&episode=${e || 1}`, testUrl: 'https://vidsrcme.ru' },
+  { name: 'vembed', build: (t, id, s, e) => t === 'movie' ? `https://vembed.stream/play/${id}` : `https://vembed.stream/play/${id}?s=${s || 1}&e=${e || 1}`, testUrl: 'https://vembed.stream' },
+  { name: 'MoviePla', build: (t, id, s, e) => t === 'movie' ? `https://moviepla.net/embed/${id}` : `https://moviepla.net/embed/${id}?season=${s || 1}&episode=${e || 1}`, testUrl: 'https://moviepla.net' },
+  { name: '123Movies', build: (t, id, s, e) => t === 'movie' ? `https://www.123movies.life/embed/${id}` : `https://www.123movies.life/embed/${id}?season=${s || 1}&episode=${e || 1}`, testUrl: 'https://www.123movies.life' },
 ]
 
 const GENRES = [
@@ -85,6 +86,8 @@ export default function HomePage() {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const playerVideoRef = useRef<HTMLDivElement>(null)
   const testedRef = useRef(new Set())
+  const [iframeKey, setIframeKey] = useState(0)
+  const [loading, setLoading] = useState(false)
 
   const transformMovie = (m: Movie): ContentItem => ({
     id: String(m.id),
@@ -177,7 +180,10 @@ export default function HomePage() {
     if (selectedMovie) {
       const url = providers[currentProvider]?.build(selectedMovie.type, selectedMovie.id) || ''
       setEmbedUrl(url)
+      setIframeKey(k => k + 1)
+      setLoading(true)
       providers.forEach((_, i) => testProvider(i))
+      window.location.hash = `watch/${selectedMovie.id}`
     }
   }, [selectedMovie])
 
@@ -189,10 +195,10 @@ export default function HomePage() {
   }, [providerStates])
 
   useEffect(() => {
-    if (embedUrl && selectedMovie) {
+    if (selectedMovie) {
       setEmbedUrl(providers[currentProvider]?.build(selectedMovie.type, selectedMovie.id) || '')
     }
-  }, [currentProvider, selectedMovie])
+  }, [currentProvider])
 
   const toggleFullscreen = () => {
     const el = playerVideoRef.current
@@ -254,8 +260,25 @@ export default function HomePage() {
     const progress = existingProgress?.progress || 0
     setProg(progress)
     updateWatchHistory(item, 0)
+    window.location.hash = `watch/${item.id}`
     window.scrollTo(0, 0)
   }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const hash = window.location.hash
+    if (hash.startsWith('#watch/')) {
+      const movieId = hash.replace('#watch/', '')
+      const foundMovie = trending.find(m => m.id === movieId) || popular.find(m => m.id === movieId) || topRated.find(m => m.id === movieId) || anime.find(m => m.id === movieId)
+      if (foundMovie) {
+        setSelectedMovie(foundMovie)
+        setCurrentPage('player')
+        setPlaying(false)
+        const existingProgress = watchHistory.find(h => h.id === foundMovie.id)
+        setProg(existingProgress?.progress || 0)
+      }
+    }
+  }, [trending, popular, topRated, anime])
 
   const showToast = (msg: string, type = '') => {
     setToastMsg(msg)
@@ -487,17 +510,29 @@ export default function HomePage() {
             <div className="player-fake-video">
               {selectedMovie?.backdrop && <img src={selectedMovie.backdrop} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }} />}
             </div>
-            <div className="player-center-play" onClick={() => { setPlaying(true); showToast('Loading stream...') }}>
+            <div className="player-center-play" onClick={() => { setPlaying(true); setLoading(true); }}>
               <div className="play-big-btn">
-                <svg viewBox="0 0 24 24">{playing ? <><rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none" /><rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none" /></> : <path d="M5 3l14 9-14 9V3z" />}</svg>
+                {loading ? (
+                  <div className="spinner" />
+                ) : playing ? (
+                  <svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none" /><rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none" /></svg>
+                ) : (
+                  <svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z" /></svg>
+                )}
               </div>
-              <span className="play-label">{playing ? 'Playing...' : 'Press to Play'}</span>
+              <span className="play-label">{loading ? 'Loading...' : playing ? 'Playing...' : 'Press to Play'}</span>
             </div>
             <div className="player-controls-overlay">
               <div className="player-progress"><div className="player-buffered" style={{ width: '78%' }}></div><div className="player-progress-fill" style={{ width: `${prog}%` }}></div></div>
               <div className="player-ctrl-row">
-                <button className="ctrl-btn" onClick={() => setPlaying(!playing)}>
-                  <svg viewBox="0 0 24 24">{playing ? <><rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none" /><rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none" /></> : <path d="M5 3l14 9-14 9V3z" />}</svg>
+                <button className="ctrl-btn" onClick={() => { setPlaying(!playing); if (!playing) setLoading(true) }}>
+                  {loading ? (
+                    <div className="spinner-sm" />
+                  ) : playing ? (
+                    <svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none" /><rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none" /></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z" /></svg>
+                  )}
                 </button>
                 <button className="ctrl-btn" title="Previous"><svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
                 <button className="ctrl-btn" title="Next"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
@@ -534,7 +569,7 @@ export default function HomePage() {
             <h3>Streaming Sources</h3>
             <div className="cards-scroll" style={{ gap: 8 }}>
               {providers.map((p, i) => (
-                <button key={p.name} onClick={() => setCurrentProvider(i)} style={{
+                <button key={p.name} onClick={() => { setCurrentProvider(i); setIframeKey(k => k + 1); setLoading(true) }} style={{
                   padding: '8px 14px', borderRadius: 6,
                   border: i === currentProvider ? '1px solid var(--accent)' : '1px solid var(--border)',
                   background: i === currentProvider ? 'rgba(232,201,109,0.15)' : 'var(--surface2)',
@@ -547,8 +582,9 @@ export default function HomePage() {
               ))}
             </div>
             <div style={{ marginTop: 20, border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', background: '#000' }}>
-              <iframe key={embedUrl} ref={iframeRef} src={embedUrl} style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
-                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; allowfullscreen" referrerPolicy="no-referrer" allowFullScreen />
+              <iframe key={iframeKey} ref={iframeRef} src={embedUrl} style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; allowfullscreen" referrerPolicy="no-referrer" allowFullScreen
+                onLoad={() => setLoading(false)} />
             </div>
           </div>
         </div>

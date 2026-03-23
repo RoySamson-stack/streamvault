@@ -637,3 +637,44 @@ img { display: block; }
   .player-info-panel { grid-template-columns: 1fr; padding: 20px; }
   .episodes-panel { padding: 20px; }
 }
+
+/* Loading Spinner */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(232, 201, 109, 0.2);
+  border-top-color: #e8c96d;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: auto;
+}
+
+.spinner-sm {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.is-fullscreen {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 99999;
+  border-radius: 0 !important;
+}
+
+.is-fullscreen iframe {
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: unset !important;
+}
