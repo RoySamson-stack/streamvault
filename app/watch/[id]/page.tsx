@@ -92,14 +92,12 @@ export default function WatchPage({ params }: { params: { id: string } }) {
   }
 
   useEffect(() => {
-    if (movie) {
-      const url = providers[currentProvider]?.build(movie.type, movie.id) || ''
-      setEmbedUrl(url)
-      iframeKeyRef.current += 1
-      setLoading(true)
-      providers.forEach((_, i) => testProvider(i))
-    }
-  }, [movie])
+    const url = providers[currentProvider]?.build(type, params.id, season ?? undefined, episode ?? undefined) || ''
+    setEmbedUrl(url)
+    iframeKeyRef.current += 1
+    setLoading(true)
+    providers.forEach((_, i) => testProvider(i))
+  }, [params.id, type, season, episode, currentProvider])
 
   const showToast = (msg: string) => {
     setToastMsg(msg)
@@ -118,11 +116,7 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     if (readyCount > 0) selectFastest()
   }, [providerStates])
 
-  useEffect(() => {
-    if (embedUrl && movie) {
-      setEmbedUrl(providers[currentProvider]?.build(movie.type, movie.id) || '')
-    }
-  }, [currentProvider, movie])
+
 
   const togglePlay = () => {
     setPlaying(!playing)
