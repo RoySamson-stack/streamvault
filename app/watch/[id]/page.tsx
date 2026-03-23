@@ -23,6 +23,7 @@ interface Provider {
 }
 
 const providers: Provider[] = [
+  { name: 'zxcstream', build: (t, id, s, e) => t === 'movie' ? `https://zxcstream.xyz/embed/movie/${id}` : `https://zxcstream.xyz/embed/tv/${id}/${s || 1}/${e || 1}`, testUrl: 'https://zxcstream.xyz' },
   { name: 'Frembed', build: (t, id, s, e) => t === 'movie' ? `https://frembed.bond/embed/movie/${id}` : `https://frembed.bond/embed/tv/${id}/${s || 1}/${e || 1}`, testUrl: 'https://frembed.bond' },
   { name: 'VidBinge', build: (t, id, s, e) => t === 'movie' ? `https://vidbinge.to/movie/${id}` : `https://vidbinge.to/tv/${id}/${s || 1}/${e || 1}`, testUrl: 'https://vidbinge.to' },
   { name: 'VidSrc.to', build: (t, id, s, e) => t === 'movie' ? `https://vidsrc.to/embed/movie/${id}` : `https://vidsrc.to/embed/tv/${id}/${s || 1}/${e || 1}`, testUrl: 'https://vidsrc.to' },
