@@ -112,8 +112,13 @@ export default function HomePage() {
     const savedMovie = localStorage.getItem('vaultsphere_selected_movie')
     if (savedPage && savedMovie) {
       try {
-        setCurrentPage(savedPage)
-        setSelectedMovie(JSON.parse(savedMovie))
+        if (savedPage === 'player') {
+          setCurrentPage('home')
+          setSelectedMovie(null)
+        } else {
+          setCurrentPage(savedPage)
+          setSelectedMovie(JSON.parse(savedMovie))
+        }
       } catch (e) {}
     }
     setIsRestoring(false)
