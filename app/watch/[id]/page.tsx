@@ -183,36 +183,22 @@ export default function WatchPage({ params }: { params: { id: string } }) {
           </div>
         </nav>
 
-        <div className="player-area" onClick={() => { setPlaying(true); setLoading(true) }}>
-          <div className="player-bg">
-            {movie?.backdrop && <img src={movie.backdrop} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }} />}
-          </div>
-          {!playing && (
+        <div className="player-area">
+          {!playing ? (
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, zIndex: 10 }}>
               {loading ? (
                 <div className="spinner" />
               ) : (
-                <div className="play-btn">
+                <div className="play-btn" onClick={() => { setPlaying(true) }} style={{ cursor: 'pointer' }}>
                   <svg viewBox="0 0 24 24" style={{ width: 30, height: 30, fill: '#e8c96d', marginLeft: 4 }}><path d="M5 3l14 9-14 9V3z"/></svg>
                 </div>
               )}
               <span style={{ fontSize: 13, color: 'rgba(240,242,245,0.7)', textTransform: 'uppercase', letterSpacing: 1 }}>{loading ? 'Loading...' : 'Press to Play'}</span>
             </div>
+          ) : (
+            <iframe key={iframeKeyRef.current} ref={iframeRef} src={embedUrl} style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen onLoad={() => setLoading(false)} />
           )}
-          <div className="controls">
-            <div className="progress-bar"><div className="progress-fill" style={{ width: `${prog}%` }}></div></div>
-            <div className="ctrl-row">
-              <button className="ctrl-btn" onClick={(e) => { e.stopPropagation(); setPlaying(!playing) }}>
-                <svg viewBox="0 0 24 24">{playing ? <><rect x="6" y="4" width="4" height="16" fill="currentColor" stroke="none"/><rect x="14" y="4" width="4" height="16" fill="currentColor" stroke="none"/></> : <path d="M5 3l14 9-14 9V3z"/>}</svg>
-              </button>
-              <button className="ctrl-btn" title="Previous"><svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
-              <button className="ctrl-btn" title="Next"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
-              <span className="time-disp">{Math.floor(prog * 1.58)}:{String(Math.floor((prog * 94) % 60)).padStart(2, '0')} / {movie?.title ? 'HD' : '...'}</span>
-              <div style={{ flex: 1 }}></div>
-              <span className="quality-btn">1080p</span>
-              <button className="ctrl-btn"><svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
-            </div>
-          </div>
         </div>
 
         <div className="info-panel">
@@ -242,10 +228,6 @@ export default function WatchPage({ params }: { params: { id: string } }) {
                 {providerStates[i]?.status === 'testing' && <span style={{ fontSize: 10, color: '#f5c518' }}>⚡</span>}
               </button>
             ))}
-          </div>
-          <div style={{ marginTop: 20, borderRadius: 8, overflow: 'hidden', background: '#000', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <iframe key={iframeKeyRef.current} ref={iframeRef} src={embedUrl} style={{ width: '100%', aspectRatio: '16/9', border: 'none' }}
-              allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowFullScreen onLoad={() => setLoading(false)} />
           </div>
         </div>
 
