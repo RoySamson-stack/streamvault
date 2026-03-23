@@ -267,7 +267,7 @@ img { display: block; }
 .wcard-sub { font-size: 11px; color: var(--muted2); margin-top: 2px; }
 
 /* ════ HERO ════ */
-.hero { position: relative; height: 92vh; overflow: hidden; display: flex; align-items: flex-end; }
+.hero { position: relative; height: 100vh; max-height: 800px; min-height: 600px; overflow: hidden; display: flex; align-items: flex-end; padding-top: var(--nav); }
 .hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center top; transform: scale(1.04); animation: hzoom 20s ease-in-out infinite alternate; }
 @keyframes hzoom { from { transform: scale(1.04); } to { transform: scale(1.09); } }
 .hero-grad {
@@ -276,7 +276,7 @@ img { display: block; }
   background: linear-gradient(90deg,rgba(7,9,13,0.97) 30%,rgba(7,9,13,0.4) 65%,rgba(7,9,13,0.05) 100%),
              linear-gradient(0deg,rgba(7,9,13,1) 0%,rgba(7,9,13,0.3) 35%,transparent 65%);
 }
-.hero-content { position: relative; z-index: 2; padding: 0 60px 72px; max-width: 580px; animation: hup 0.8s ease both; }
+.hero-content { position: relative; z-index: 2; padding: 0 60px 72px; max-width: 580px; animation: hup 0.8s ease both; margin-top: auto; }
 @keyframes hup { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 .hero-eyebrow {
   display: inline-flex;

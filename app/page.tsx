@@ -223,8 +223,10 @@ export default function HomePage() {
     setSelectedMovie(item)
     setCurrentPage('player')
     setPlaying(false)
-    setProg(Math.floor(Math.random() * 60) + 10)
-    updateWatchHistory(item, Math.floor(Math.random() * 60) + 10)
+    const existingProgress = watchHistory.find(h => h.id === item.id)
+    const progress = existingProgress?.progress || 0
+    setProg(progress)
+    updateWatchHistory(item, 0)
     window.scrollTo(0, 0)
   }
 
