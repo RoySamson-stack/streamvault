@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { poster, backdrop, getGenreNames } from '@/lib/tmdb'
 
 interface WatchHistoryItem {
@@ -19,6 +20,17 @@ interface Movie {
   backdrop_path: string | null
   overview: string | null
   release_date: string
+  vote_average: number
+  genre_ids: number[]
+}
+
+interface TVShow {
+  id: number
+  name: string
+  poster_path: string | null
+  backdrop_path: string | null
+  overview: string | null
+  first_air_date: string
   vote_average: number
   genre_ids: number[]
 }
@@ -66,12 +78,14 @@ const GENRES = [
 export default function HomePage() {
   const [trending, setTrending] = useState<ContentItem[]>([])
   const [popular, setPopular] = useState<ContentItem[]>([])
+  const [popularTV, setPopularTV] = useState<ContentItem[]>([])
   const [topRated, setTopRated] = useState<ContentItem[]>([])
   const [anime, setAnime] = useState<ContentItem[]>([])
   const [heroItem, setHeroItem] = useState<ContentItem | null>(null)
   const [currentPage, setCurrentPage] = useState('home')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<ContentItem[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
   const [selectedFilter, setSelectedFilter] = useState('All')
   const [settingsPanel, setSettingsPanel] = useState('account')
   const [profileTab, setProfileTab] = useState('watchlist')
@@ -91,6 +105,7 @@ export default function HomePage() {
   const [iframeKey, setIframeKey] = useState(0)
   const [loading, setLoading] = useState(false)
   const [isRestoring, setIsRestoring] = useState(true)
+  const router = useRouter()
 
   const transformMovie = (m: Movie): ContentItem => ({
     id: String(m.id),
@@ -102,6 +117,18 @@ export default function HomePage() {
     genre: getGenreNames(m.genre_ids ?? []),
     type: 'movie',
     description: m.overview || '',
+  })
+
+  const transformTV = (t: TVShow): ContentItem => ({
+    id: String(t.id),
+    title: t.name || '',
+    poster: poster(t.poster_path),
+    backdrop: backdrop(t.backdrop_path),
+    rating: t.vote_average || 0,
+    year: t.first_air_date ? parseInt(String(t.first_air_date).split('-')[0]) : 2024,
+    genre: getGenreNames(t.genre_ids ?? []),
+    type: 'tv',
+    description: t.overview || '',
   })
 
   useEffect(() => {
@@ -146,23 +173,26 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [trendingRes, popularRes, topRatedRes, animeRes] = await Promise.all([
+        const [trendingRes, popularRes, popularTVRes, topRatedRes, animeRes] = await Promise.all([
           fetch(`/api/tmdb?endpoint=trending/movie/week`),
           fetch(`/api/tmdb?endpoint=movie/popular`),
+          fetch(`/api/tmdb?endpoint=tv/popular`),
           fetch(`/api/tmdb?endpoint=movie/top_rated`),
           fetch(`/api/tmdb?endpoint=discover/tv?with_origin_country=JP`),
         ])
-        const [trendingData, popularData, topRatedData, animeData] = await Promise.all([
-          trendingRes.json(), popularRes.json(), topRatedRes.json(), animeRes.json()
+        const [trendingData, popularData, popularTVData, topRatedData, animeData] = await Promise.all([
+          trendingRes.json(), popularRes.json(), popularTVRes.json(), topRatedRes.json(), animeRes.json()
         ])
 
         const t = trendingData.results?.map(transformMovie) || []
         const p = popularData.results?.map(transformMovie) || []
+        const pt = popularTVData.results?.map(transformTV) || []
         const tr = topRatedData.results?.map(transformMovie) || []
-        const a = animeData.results?.map(transformMovie) || []
+        const a = animeData.results?.map(transformTV) || []
 
         setTrending(t)
         setPopular(p)
+        setPopularTV(pt)
         setTopRated(tr)
         setAnime(a)
         if (t.length > 0) setHeroItem(t[0])
@@ -172,6 +202,41 @@ export default function HomePage() {
     }
     fetchData()
   }, [])
+
+  useEffect(() => {
+    const q = searchQuery.trim()
+    if (q.length < 2) {
+      setSearchResults([])
+      setSearchLoading(false)
+      return
+    }
+    setSearchLoading(true)
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/tmdb?endpoint=search/multi&query=${encodeURIComponent(q)}`)
+        const data = await res.json()
+        const results = data.results?.filter((r: any) => r.media_type === 'movie' || r.media_type === 'tv')?.slice(0, 12)
+          ?.map((r: any) => ({
+            id: String(r.id),
+            title: r.title || r.name || '',
+            poster: poster(r.poster_path),
+            backdrop: backdrop(r.backdrop_path),
+            rating: r.vote_average || 0,
+            year: (r.release_date || r.first_air_date || '2024').split('-')[0],
+            genre: getGenreNames(r.genre_ids ?? []),
+            type: r.media_type === 'movie' ? 'movie' : 'tv',
+            description: r.overview || '',
+          })) || []
+        setSearchResults(results)
+      } catch (err) {
+        console.error('Search failed:', err)
+        setSearchResults([])
+      } finally {
+        setSearchLoading(false)
+      }
+    }, 350)
+    return () => clearTimeout(t)
+  }, [searchQuery])
 
   const testProvider = async (index: number) => {
     if (testedRef.current.has(index)) return
@@ -253,29 +318,11 @@ export default function HomePage() {
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query)
-    if (query.length < 2) { setSearchResults([]); return }
-    try {
-      const res = await fetch(`/api/tmdb?endpoint=search/multi&query=${encodeURIComponent(query)}`)
-      const data = await res.json()
-      const results = data.results?.filter((r: any) => r.media_type === 'movie' || r.media_type === 'tv')?.slice(0, 12)
-        ?.map((r: any) => ({
-          id: String(r.id),
-          title: r.title || r.name || '',
-          poster: poster(r.poster_path),
-          backdrop: backdrop(r.backdrop_path),
-          rating: r.vote_average || 0,
-          year: (r.release_date || r.first_air_date || '2024').split('-')[0],
-          genre: [],
-          type: r.media_type === 'movie' ? 'movie' : 'tv',
-          description: r.overview || '',
-        })) || []
-      setSearchResults(results)
-    } catch (err) { console.error('Search failed:', err) }
   }
 
   const handleWatch = (item: ContentItem) => {
     updateWatchHistory(item, 0)
-    window.location.href = `/watch/${item.id}`
+    window.location.href = `/watch/${item.id}?type=${item.type}`
   }
 
 
@@ -287,9 +334,13 @@ export default function HomePage() {
   }
 
   const getFilteredMovies = () => {
-    if (selectedFilter === 'Movies') return popular.filter(m => m.type === 'movie')
-    if (selectedFilter === 'TV Shows') return popular.filter(m => m.type === 'tv')
-    return popular
+    const all = [...popular, ...popularTV]
+    if (selectedFilter === 'Movies') return all.filter(m => m.type === 'movie')
+    if (selectedFilter === 'TV Shows') return all.filter(m => m.type === 'tv')
+    if (['Action', 'Drama', 'Comedy', 'Horror', 'Sci-Fi', 'Animation'].includes(selectedFilter)) {
+      return all.filter(m => m.genre.includes(selectedFilter))
+    }
+    return all
   }
 
   const navScrolled = typeof window !== 'undefined' && window.scrollY > 60
@@ -302,8 +353,9 @@ export default function HomePage() {
         <div className="logo" onClick={() => goToPage('home')}>VAULT<span>SPHERE</span></div>
         <div className="nav-center">
           <span className={`nav-link ${currentPage === 'home' ? 'active' : ''}`} onClick={() => goToPage('home')}>Home</span>
-          <span className={`nav-link ${currentPage === 'browse' ? 'active' : ''}`} onClick={() => goToPage('browse')}>Browse</span>
-          <span className={`nav-link ${currentPage === 'search' ? 'active' : ''}`} onClick={() => goToPage('search')}>Search</span>
+          <span className="nav-link" onClick={() => router.push('/browse')}>Browse</span>
+          <span className="nav-link" onClick={() => router.push('/search')}>Search</span>
+          <span className="nav-link" onClick={() => router.push('/sports')}>Sports</span>
           <span className={`nav-link ${currentPage === 'community' ? 'active' : ''}`} onClick={() => goToPage('community')}>Community</span>
           <span className={`nav-link ${currentPage === 'myspace' ? 'active' : ''}`} onClick={() => goToPage('myspace')}>My Space</span>
         </div>
@@ -414,7 +466,7 @@ export default function HomePage() {
           </div>
 
           <div className="row-wrap">
-            <div className="row-head"><span className="row-label">Popular <em>Movies</em></span><span className="row-all" onClick={() => goToPage('browse')}>See all</span></div>
+            <div className="row-head"><span className="row-label">Popular <em>Movies</em></span><span className="row-all" onClick={() => router.push('/browse')}>See all</span></div>
             <div className="cards-scroll">
               {popular.slice(0, 8).map((item) => (
                 <div key={item.id} className="card" onClick={() => handleWatch(item)}>
@@ -651,7 +703,7 @@ export default function HomePage() {
           </div>
           {searchQuery.length >= 2 ? (
             <div style={{ maxWidth: 980, margin: '0 auto' }}>
-              <div className="search-results-title">{searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for "{searchQuery}"</div>
+              <div className="search-results-title">{searchLoading ? 'Searching…' : `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} for "${searchQuery}"`}</div>
               <div className="search-results-grid">
                 {searchResults.map((item) => (
                   <div key={item.id} className="card" onClick={() => handleWatch(item)}>
@@ -678,7 +730,7 @@ export default function HomePage() {
               <h3 style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--muted)', marginBottom: 20, fontWeight: 600, textAlign: 'center' }}>Browse by Genre</h3>
               <div className="genre-mosaic">
                 {GENRES.map((g) => (
-                  <div key={g.name} className="gmosaic-card" data-icon={g.icon} style={{ background: g.bg, borderColor: `${g.c}22`, color: g.c }} onClick={() => goToPage('browse')}>
+                  <div key={g.name} className="gmosaic-card" data-icon={g.icon} style={{ background: g.bg, borderColor: `${g.c}22`, color: g.c }} onClick={() => router.push('/browse')}>
                     <div className="gmosaic-label">{g.name}</div>
                     <div className="gmosaic-count">{g.count}</div>
                   </div>

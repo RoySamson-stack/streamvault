@@ -16,7 +16,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    const url = `${TMDB_BASE}/${endpoint}${endpoint.includes('?') ? '&' : '?'}api_key=${TMDB_KEY}`
+    const params = new URLSearchParams(searchParams)
+    params.delete('endpoint')
+    const extra = params.toString()
+    const joiner = endpoint.includes('?') ? '&' : '?'
+    const url = `${TMDB_BASE}/${endpoint}${joiner}${extra ? `${extra}&` : ''}api_key=${TMDB_KEY}`
     const res = await fetch(url, {
       next: { revalidate: 300 }
     })
