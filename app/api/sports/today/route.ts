@@ -53,6 +53,7 @@ const POPULAR_LEAGUES = [
 
 const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim()
 const POPULAR_SET = new Set(POPULAR_LEAGUES.map(normalize))
+const FINISHED_STATUS = ['finished', 'ft', 'full time', 'aet', 'after extra time', 'final', 'ended', 'postponed', 'cancelled', 'canceled']
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -69,7 +70,10 @@ export async function GET(request: Request) {
     const raw = Array.isArray(data?.events) ? data.events : []
     const events = raw.filter((e: any) => {
       const league = normalize(e?.strLeague || '')
-      return POPULAR_SET.has(league)
+      if (!POPULAR_SET.has(league)) return false
+      const status = normalize(e?.strStatus || '')
+      if (status && FINISHED_STATUS.some(s => status.includes(s))) return false
+      return true
     })
 
     return NextResponse.json({ date, events })

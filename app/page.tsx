@@ -107,6 +107,13 @@ export default function HomePage() {
   const [isRestoring, setIsRestoring] = useState(true)
   const router = useRouter()
 
+  const onEnter = (action: () => void) => (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      action()
+    }
+  }
+
   const transformMovie = (m: Movie): ContentItem => ({
     id: String(m.id),
     title: m.title || '',
@@ -347,17 +354,21 @@ export default function HomePage() {
 
   return (
     <>
+      <section className="seo-blurb">
+        <h1>Watch movies, TV series, anime, and live sports in one place</h1>
+        <p>VaultSphere helps you discover trending titles, popular series, and today’s sports schedule fast.</p>
+      </section>
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
 
       <nav id="nav" className={navScrolled ? 'scrolled' : 'solid'}>
-        <div className="logo" onClick={() => goToPage('home')}>VAULT<span>SPHERE</span></div>
+        <div className="logo focusable" role="button" tabIndex={0} onClick={() => goToPage('home')} onKeyDown={onEnter(() => goToPage('home'))}>VAULT<span>SPHERE</span></div>
         <div className="nav-center">
-          <span className={`nav-link ${currentPage === 'home' ? 'active' : ''}`} onClick={() => goToPage('home')}>Home</span>
-          <span className="nav-link" onClick={() => router.push('/browse')}>Browse</span>
-          <span className="nav-link" onClick={() => router.push('/search')}>Search</span>
-          <span className="nav-link" onClick={() => router.push('/sports')}>Sports</span>
-          <span className={`nav-link ${currentPage === 'community' ? 'active' : ''}`} onClick={() => goToPage('community')}>Community</span>
-          <span className={`nav-link ${currentPage === 'myspace' ? 'active' : ''}`} onClick={() => goToPage('myspace')}>My Space</span>
+          <span className={`nav-link ${currentPage === 'home' ? 'active' : ''} focusable`} role="button" tabIndex={0} onClick={() => goToPage('home')} onKeyDown={onEnter(() => goToPage('home'))}>Home</span>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/browse')} onKeyDown={onEnter(() => router.push('/browse'))}>Browse</span>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/search')} onKeyDown={onEnter(() => router.push('/search'))}>Search</span>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/sports')} onKeyDown={onEnter(() => router.push('/sports'))}>Sports</span>
+          <span className={`nav-link ${currentPage === 'community' ? 'active' : ''} focusable`} role="button" tabIndex={0} onClick={() => goToPage('community')} onKeyDown={onEnter(() => goToPage('community'))}>Community</span>
+          <span className={`nav-link ${currentPage === 'myspace' ? 'active' : ''} focusable`} role="button" tabIndex={0} onClick={() => goToPage('myspace')} onKeyDown={onEnter(() => goToPage('myspace'))}>My Space</span>
         </div>
         <div className="nav-right">
           <button className="nav-icon-btn" onClick={() => setNotifOpen(!notifOpen)}>
@@ -367,7 +378,7 @@ export default function HomePage() {
           <button className="nav-icon-btn" onClick={() => goToPage('settings')}>
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
-          <div className="avatar-btn" onClick={() => goToPage('myspace')}>A</div>
+          <div className="avatar-btn focusable" role="button" tabIndex={0} onClick={() => goToPage('myspace')} onKeyDown={onEnter(() => goToPage('myspace'))}>A</div>
         </div>
       </nav>
 
@@ -417,13 +428,13 @@ export default function HomePage() {
 
           {watchHistory.length > 0 && (
             <div className="row-wrap">
-              <div className="row-head"><span className="row-label">Continue <em>Watching</em></span><span className="row-all">See all</span></div>
+              <div className="row-head"><span className="row-label">Continue <em>Watching</em></span><span className="row-all focusable" role="button" tabIndex={0}>See all</span></div>
               <div className="cards-scroll">
                 {watchHistory.map((item) => {
                   const movie: ContentItem | undefined = trending.find(m => m.id === item.id) || popular.find(m => m.id === item.id) || anime.find(m => m.id === item.id)
                   if (!movie) return null
                   return (
-                    <div key={item.id} className="wcard" onClick={() => handleWatch(movie as ContentItem)}>
+                    <div key={item.id} className="wcard focusable" role="button" tabIndex={0} onClick={() => handleWatch(movie as ContentItem)} onKeyDown={onEnter(() => handleWatch(movie as ContentItem))}>
                       <div className="wcard-img">
                         {item.poster ? <img src={item.poster} alt={item.title} /> : (
                           <div style={{ width: '100%', height: '100%', background: '#131920', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -442,10 +453,10 @@ export default function HomePage() {
           )}
 
           <div className="row-wrap">
-            <div className="row-head"><span className="row-label">Trending <em>Now</em></span><span className="row-all">See all</span></div>
+            <div className="row-head"><span className="row-label">Trending <em>Now</em></span><span className="row-all focusable" role="button" tabIndex={0}>See all</span></div>
             <div className="cards-scroll">
               {trending.slice(0, 10).map((item) => (
-                <div key={item.id} className="card" onClick={() => handleWatch(item)}>
+                <div key={item.id} className="card focusable" role="button" tabIndex={0} onClick={() => handleWatch(item)} onKeyDown={onEnter(() => handleWatch(item))}>
                   <div className="card-img">
                     {item.poster ? <img src={item.poster} alt={item.title} loading="lazy" /> : (
                       <div style={{ width: '100%', height: '100%', background: '#131920', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -466,10 +477,10 @@ export default function HomePage() {
           </div>
 
           <div className="row-wrap">
-            <div className="row-head"><span className="row-label">Popular <em>Movies</em></span><span className="row-all" onClick={() => router.push('/browse')}>See all</span></div>
+            <div className="row-head"><span className="row-label">Popular <em>Movies</em></span><span className="row-all focusable" role="button" tabIndex={0} onClick={() => router.push('/browse')} onKeyDown={onEnter(() => router.push('/browse'))}>See all</span></div>
             <div className="cards-scroll">
               {popular.slice(0, 8).map((item) => (
-                <div key={item.id} className="card" onClick={() => handleWatch(item)}>
+                <div key={item.id} className="card focusable" role="button" tabIndex={0} onClick={() => handleWatch(item)} onKeyDown={onEnter(() => handleWatch(item))}>
                   <div className="card-img">
                     {item.poster ? <img src={item.poster} alt={item.title} loading="lazy" /> : (
                       <div style={{ width: '100%', height: '100%', background: '#131920', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -490,10 +501,10 @@ export default function HomePage() {
           </div>
 
           <div className="row-wrap">
-            <div className="row-head"><span className="row-label">Top <em>Rated</em></span><span className="row-all">See all</span></div>
+            <div className="row-head"><span className="row-label">Top <em>Rated</em></span><span className="row-all focusable" role="button" tabIndex={0}>See all</span></div>
             <div className="cards-scroll">
               {topRated.slice(0, 8).map((item) => (
-                <div key={item.id} className="card" onClick={() => handleWatch(item)}>
+                <div key={item.id} className="card focusable" role="button" tabIndex={0} onClick={() => handleWatch(item)} onKeyDown={onEnter(() => handleWatch(item))}>
                   <div className="card-img">
                     {item.poster ? <img src={item.poster} alt={item.title} loading="lazy" /> : (
                       <div style={{ width: '100%', height: '100%', background: '#131920', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -514,10 +525,10 @@ export default function HomePage() {
           </div>
 
           <div className="row-wrap">
-            <div className="row-head"><span className="row-label">Animation</span><span className="row-all">See all</span></div>
+            <div className="row-head"><span className="row-label">Animation</span><span className="row-all focusable" role="button" tabIndex={0}>See all</span></div>
             <div className="cards-scroll">
               {anime.slice(0, 8).map((item) => (
-                <div key={item.id} className="card" onClick={() => handleWatch(item)}>
+                <div key={item.id} className="card focusable" role="button" tabIndex={0} onClick={() => handleWatch(item)} onKeyDown={onEnter(() => handleWatch(item))}>
                   <div className="card-img">
                     {item.poster ? <img src={item.poster} alt={item.title} loading="lazy" /> : (
                       <div style={{ width: '100%', height: '100%', background: '#131920', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -730,7 +741,7 @@ export default function HomePage() {
               <h3 style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--muted)', marginBottom: 20, fontWeight: 600, textAlign: 'center' }}>Browse by Genre</h3>
               <div className="genre-mosaic">
                 {GENRES.map((g) => (
-                  <div key={g.name} className="gmosaic-card" data-icon={g.icon} style={{ background: g.bg, borderColor: `${g.c}22`, color: g.c }} onClick={() => router.push('/browse')}>
+                  <div key={g.name} className="gmosaic-card focusable" role="button" tabIndex={0} data-icon={g.icon} style={{ background: g.bg, borderColor: `${g.c}22`, color: g.c }} onClick={() => router.push('/browse')} onKeyDown={onEnter(() => router.push('/browse'))}>
                     <div className="gmosaic-label">{g.name}</div>
                     <div className="gmosaic-count">{g.count}</div>
                   </div>
@@ -781,7 +792,7 @@ export default function HomePage() {
               <div>
                 <div className="dt-section"><h3>More Like This</h3></div>
                 {trending.slice(1, 6).map((item) => (
-                  <div key={item.id} className="sim-item" onClick={() => { setSelectedMovie(item); setCurrentPage('detail') }}>
+                  <div key={item.id} className="sim-item focusable" role="button" tabIndex={0} onClick={() => { setSelectedMovie(item); setCurrentPage('detail') }} onKeyDown={onEnter(() => { setSelectedMovie(item); setCurrentPage('detail') })}>
                     <div className="sim-thumb">
                       {item.poster ? <img src={item.poster} alt={item.title} /> : (
                         <div style={{ width: '100%', height: '100%', background: '#131920', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -832,7 +843,7 @@ export default function HomePage() {
               <div className="sidebar-widget">
                 <div className="sw-title">Trending This Week</div>
                 {trending.slice(0, 5).map((item, i) => (
-                  <div key={item.id} className="trend-list-item" onClick={() => handleWatch(item)}>
+                  <div key={item.id} className="trend-list-item focusable" role="button" tabIndex={0} onClick={() => handleWatch(item)} onKeyDown={onEnter(() => handleWatch(item))}>
                     <div className="trend-rank">{String(i + 1).padStart(2, '0')}</div>
                     <div className="trend-details"><h4>{item.title}</h4><p>{item.genre[0]} · {item.year}</p></div>
                     <div className="trend-thumb-sm">
@@ -878,7 +889,7 @@ export default function HomePage() {
           <div className={`ptab-content ${profileTab === 'watchlist' ? 'active' : ''}`}>
             <div className="wl-grid">
               {trending.slice(0, 8).map((item) => (
-                <div key={item.id} className="card" onClick={() => handleWatch(item)}>
+                <div key={item.id} className="card focusable" role="button" tabIndex={0} onClick={() => handleWatch(item)} onKeyDown={onEnter(() => handleWatch(item))}>
                   <div className="card-img">
                     {item.poster ? <img src={item.poster} alt={item.title} loading="lazy" /> : (
                       <div style={{ width: '100%', height: '100%', background: '#131920', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -901,7 +912,7 @@ export default function HomePage() {
           <div className={`ptab-content ${profileTab === 'history' ? 'active' : ''}`}>
             <div className="history-list">
               {watchHistory.map((item) => (
-                <div key={item.id} className="hi" onClick={() => { const m = trending.find(t => t.id === item.id) || popular.find(t => t.id === item.id); if (m) handleWatch(m) }}>
+                <div key={item.id} className="hi focusable" role="button" tabIndex={0} onClick={() => { const m = trending.find(t => t.id === item.id) || popular.find(t => t.id === item.id); if (m) handleWatch(m) }} onKeyDown={onEnter(() => { const m = trending.find(t => t.id === item.id) || popular.find(t => t.id === item.id); if (m) handleWatch(m) })}>
                   <div className="hi-thumb">
                     {item.poster ? <img src={item.poster} alt={item.title} /> : (
                       <div style={{ width: '100%', height: '100%', background: '#131920', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

@@ -33,6 +33,13 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
+  const onEnter = (action: () => void) => (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      action()
+    }
+  }
+
   useEffect(() => {
     const q = searchQuery.trim()
     if (q.length < 2) {
@@ -73,15 +80,15 @@ export default function SearchPage() {
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
 
       <nav id="nav" className="solid">
-        <div className="logo" onClick={() => router.push('/')}>VAULT<span>SPHERE</span></div>
+        <div className="logo focusable" role="button" tabIndex={0} onClick={() => router.push('/')} onKeyDown={onEnter(() => router.push('/'))}>VAULT<span>SPHERE</span></div>
         <div className="nav-center">
-          <span className="nav-link" onClick={() => router.push('/')}>Home</span>
-          <span className="nav-link" onClick={() => router.push('/browse')}>Browse</span>
-          <span className="nav-link active" onClick={() => router.push('/search')}>Search</span>
-          <span className="nav-link" onClick={() => router.push('/sports')}>Sports</span>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/')} onKeyDown={onEnter(() => router.push('/'))}>Home</span>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/browse')} onKeyDown={onEnter(() => router.push('/browse'))}>Browse</span>
+          <span className="nav-link active focusable" role="button" tabIndex={0} onClick={() => router.push('/search')} onKeyDown={onEnter(() => router.push('/search'))}>Search</span>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/sports')} onKeyDown={onEnter(() => router.push('/sports'))}>Sports</span>
         </div>
         <div className="nav-right">
-          <div className="avatar-btn" onClick={() => router.push('/')}>A</div>
+          <div className="avatar-btn focusable" role="button" tabIndex={0} onClick={() => router.push('/')} onKeyDown={onEnter(() => router.push('/'))}>A</div>
         </div>
       </nav>
 
@@ -97,7 +104,7 @@ export default function SearchPage() {
             <div className="search-results-title">{loading ? 'Searching…' : `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} for "${searchQuery}"`}</div>
             <div className="search-results-grid">
               {searchResults.map((item) => (
-                <div key={item.id} className="card" onClick={() => { window.location.href = `/watch/${item.id}?type=${item.type}` }}>
+                <div key={item.id} className="card focusable" role="button" tabIndex={0} onClick={() => { window.location.href = `/watch/${item.id}?type=${item.type}` }} onKeyDown={onEnter(() => { window.location.href = `/watch/${item.id}?type=${item.type}` })}>
                   <div className="card-img">
                     {item.poster ? <img src={item.poster} alt={item.title} loading="lazy" /> : (
                       <div style={{ width: '100%', height: '100%', background: '#131920', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -126,7 +133,7 @@ export default function SearchPage() {
             <h3 style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--muted)', marginBottom: 20, fontWeight: 600, textAlign: 'center' }}>Browse by Genre</h3>
             <div className="genre-mosaic">
               {GENRES.map((g) => (
-                <div key={g.name} className="gmosaic-card" data-icon={g.icon} style={{ background: g.bg, borderColor: `${g.c}22`, color: g.c }} onClick={() => router.push('/browse')}>
+                <div key={g.name} className="gmosaic-card focusable" role="button" tabIndex={0} data-icon={g.icon} style={{ background: g.bg, borderColor: `${g.c}22`, color: g.c }} onClick={() => router.push('/browse')} onKeyDown={onEnter(() => router.push('/browse'))}>
                   <div className="gmosaic-label">{g.name}</div>
                   <div className="gmosaic-count">{g.count}</div>
                 </div>

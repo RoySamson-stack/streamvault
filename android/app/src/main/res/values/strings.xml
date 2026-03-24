@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">VaultSphere</string>
+    <string name="title_activity_main">VaultSphere</string>
+    <string name="package_name">com.vaultsphere.tv</string>
+    <string name="custom_url_scheme">com.vaultsphere.tv</string>
+</resources>

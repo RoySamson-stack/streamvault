@@ -33,6 +33,13 @@ export default function SportsPage() {
   const [sportFilter, setSportFilter] = useState<string>('All')
   const router = useRouter()
 
+  const onEnter = (action: () => void) => (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      action()
+    }
+  }
+
   useEffect(() => {
     const date = new Date()
     const yyyy = date.getFullYear()
@@ -71,21 +78,22 @@ export default function SportsPage() {
     : undefined
   const ytId = official?.url ? getYouTubeId(official.url) : null
   const eventYtId = active?.strVideo ? getYouTubeId(active.strVideo) : null
+  const thumb = active?.strThumb
 
   return (
     <>
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
 
       <nav id="nav" className="solid">
-        <div className="logo" onClick={() => router.push('/')}>VAULT<span>SPHERE</span></div>
+        <div className="logo focusable" role="button" tabIndex={0} onClick={() => router.push('/')} onKeyDown={onEnter(() => router.push('/'))}>VAULT<span>SPHERE</span></div>
         <div className="nav-center">
-          <span className="nav-link" onClick={() => router.push('/')}>Home</span>
-          <span className="nav-link" onClick={() => router.push('/browse')}>Browse</span>
-          <span className="nav-link" onClick={() => router.push('/search')}>Search</span>
-          <span className="nav-link active" onClick={() => router.push('/sports')}>Sports</span>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/')} onKeyDown={onEnter(() => router.push('/'))}>Home</span>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/browse')} onKeyDown={onEnter(() => router.push('/browse'))}>Browse</span>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/search')} onKeyDown={onEnter(() => router.push('/search'))}>Search</span>
+          <span className="nav-link active focusable" role="button" tabIndex={0} onClick={() => router.push('/sports')} onKeyDown={onEnter(() => router.push('/sports'))}>Sports</span>
         </div>
         <div className="nav-right">
-          <div className="avatar-btn" onClick={() => router.push('/')}>A</div>
+          <div className="avatar-btn focusable" role="button" tabIndex={0} onClick={() => router.push('/')} onKeyDown={onEnter(() => router.push('/'))}>A</div>
         </div>
       </nav>
 
@@ -153,9 +161,9 @@ export default function SportsPage() {
                 allowFullScreen
               />
             ) : (
-              <div className="sports-no-embed">
-                <div>No official embed available for this event.</div>
-                <div>Provide an iframe‑safe official stream URL in `OFFICIAL_EMBEDS` to enable playback.</div>
+              <div className="sports-no-embed" style={thumb ? { backgroundImage: `url(${thumb})` } : undefined}>
+                <div className="sports-no-embed-title">Live stream will appear here when officially available.</div>
+                <div className="sports-no-embed-sub">We only embed official streams that permit iframe playback.</div>
               </div>
             )}
           </div>
