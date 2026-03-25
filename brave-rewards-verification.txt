@@ -1,4 +1,0 @@
-This is a Brave Creators publisher verification file.
-
-Domain: vaultsphere.vercel.app
-Token: 523233c1f255595a8ccae83fe850bbbdc040f1a2b02bf3f68dc355d9571e3236

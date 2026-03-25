@@ -39,3 +39,4 @@ venv/
 __pycache__/
 *.pyc
 .env
+brave-rewards-verification.txt
