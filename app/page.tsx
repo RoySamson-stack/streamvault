@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { poster, backdrop, getGenreNames } from '@/lib/tmdb'
 
 interface WatchHistoryItem {
@@ -106,6 +107,22 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [isRestoring, setIsRestoring] = useState(true)
   const router = useRouter()
+
+  const todayPicks = useMemo(() => {
+    const pool = [...trending, ...popular, ...topRated]
+    if (pool.length === 0) return []
+    const seed = Number(new Date().toISOString().slice(0, 10).replace(/-/g, ''))
+    const picks: ContentItem[] = []
+    let idx = seed % pool.length
+    const used = new Set<string>()
+    while (picks.length < 8 && used.size < pool.length) {
+      const item = pool[idx % pool.length]
+      if (!used.has(item.id)) picks.push(item)
+      used.add(item.id)
+      idx += 7
+    }
+    return picks
+  }, [trending, popular, topRated])
 
   const onEnter = (action: () => void) => (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
