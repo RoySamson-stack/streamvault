@@ -1,7 +1,7 @@
-'use client'
+ 'use client'
 
-import { useSearchParams } from 'next/navigation'
-import { useEffect, useState, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { poster, backdrop } from '@/lib/tmdb'
 
 interface ContentItem {
@@ -14,6 +14,35 @@ interface ContentItem {
   genre: string[]
   type: 'movie' | 'tv'
   description: string
+}
+
+interface SeasonSummary {
+  id: number
+  name: string
+  season_number: number
+  episode_count: number
+  air_date?: string | null
+  overview?: string | null
+  poster_path?: string | null
+}
+
+interface SeasonEpisode {
+  id: number
+  episode_number: number
+  name: string
+  overview: string | null
+  air_date?: string | null
+  runtime?: number | null
+  still_path?: string | null
+}
+
+interface SeasonDetail {
+  id: number
+  name: string
+  season_number: number
+  overview?: string | null
+  poster_path?: string | null
+  episodes: SeasonEpisode[]
 }
 
 const providers = [
@@ -33,9 +62,17 @@ const providers = [
     t === 'movie' ? `https://www.123movies.life/embed/${id}` : `https://www.123movies.life/embed/${id}?season=${s || 1}&episode=${e || 1}` },
 ]
 
+const formatAirDate = (value?: string | null) => {
+  if (!value) return 'Air date TBA'
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return value
+  return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 export default function WatchPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams()
   const type = searchParams.get('type') || 'movie'
+  const router = useRouter()
   const season = searchParams.get('s')
   const episode = searchParams.get('e')
 
@@ -47,7 +84,60 @@ export default function WatchPage({ params }: { params: { id: string } }) {
   const switchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const loadedRef = useRef(false)
 
-  const embedUrl = providers[currentProvider].build(type, params.id, season || undefined, episode || undefined)
+  const searchParamsString = searchParams.toString()
+  const parsedSeason = Number.isFinite(Number(season)) && Number(season) >= 1 ? Number(season) : 1
+  const parsedEpisode = Number.isFinite(Number(episode)) && Number(episode) >= 1 ? Number(episode) : 1
+  const [selectedSeason, setSelectedSeason] = useState(parsedSeason)
+  const [selectedEpisode, setSelectedEpisode] = useState(parsedEpisode)
+  const [seasonList, setSeasonList] = useState<SeasonSummary[]>([])
+  const [seasonDetail, setSeasonDetail] = useState<SeasonDetail | null>(null)
+  const [seasonsLoading, setSeasonsLoading] = useState(false)
+  const [seasonDetailLoading, setSeasonDetailLoading] = useState(false)
+  const [seasonError, setSeasonError] = useState<string | null>(null)
+  const [seasonDetailError, setSeasonDetailError] = useState<string | null>(null)
+  const isTV = type === 'tv'
+
+  const updateQueryParams = useCallback((seasonNumber: number, episodeNumber: number) => {
+    if (!isTV) return
+    const nextParams = new URLSearchParams(searchParamsString)
+    nextParams.set('type', type)
+    nextParams.set('s', String(seasonNumber))
+    nextParams.set('e', String(episodeNumber))
+    router.replace(`/watch/${params.id}?${nextParams.toString()}`, { scroll: false })
+  }, [isTV, router, searchParamsString, type, params.id])
+
+  const handleSeasonSelect = useCallback((seasonNumber: number) => {
+    if (!isTV || seasonNumber === selectedSeason) return
+    setSelectedSeason(seasonNumber)
+    setSelectedEpisode(1)
+    updateQueryParams(seasonNumber, 1)
+  }, [isTV, selectedSeason, updateQueryParams])
+
+  const handleEpisodeSelect = useCallback((episodeNumber: number) => {
+    if (!isTV || episodeNumber === selectedEpisode) return
+    setSelectedEpisode(episodeNumber)
+    updateQueryParams(selectedSeason, episodeNumber)
+  }, [isTV, selectedEpisode, selectedSeason, updateQueryParams])
+
+  const embedUrl = providers[currentProvider].build(
+    type,
+    params.id,
+    isTV ? String(selectedSeason) : undefined,
+    isTV ? String(selectedEpisode) : undefined,
+  )
+
+  useEffect(() => {
+    if (!isTV) return
+    const paramsSnapshot = new URLSearchParams(searchParamsString)
+    const urlSeason = Number(paramsSnapshot.get('s'))
+    const urlEpisode = Number(paramsSnapshot.get('e'))
+    if (Number.isFinite(urlSeason) && urlSeason >= 1 && urlSeason !== selectedSeason) {
+      setSelectedSeason(urlSeason)
+    }
+    if (Number.isFinite(urlEpisode) && urlEpisode >= 1 && urlEpisode !== selectedEpisode) {
+      setSelectedEpisode(urlEpisode)
+    }
+  }, [isTV, searchParamsString, selectedSeason, selectedEpisode])
 
   useEffect(() => {
     async function fetchMovie() {
@@ -108,6 +198,89 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     }
   }, [currentProvider, params.id, videoLoaded])
 
+  useEffect(() => {
+    if (!isTV) {
+      setSeasonList([])
+      setSeasonDetail(null)
+      setSeasonError(null)
+      setSeasonDetailError(null)
+      setSeasonsLoading(false)
+      return
+    }
+
+    let canceled = false
+    setSeasonsLoading(true)
+    setSeasonError(null)
+
+    fetch(`/api/tmdb?endpoint=tv/${params.id}&append_to_response=seasons`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Status ${res.status}`)
+        const data = await res.json()
+        if (canceled) return
+        const seasons: SeasonSummary[] = (data.seasons || []).filter((season: SeasonSummary) => season.season_number > 0)
+        setSeasonList(seasons)
+
+        if (seasons.length === 0) {
+          setSeasonError('No seasons found for this show.')
+          setSeasonDetail(null)
+          return
+        }
+
+        const hasSelected = seasons.some(s => s.season_number === selectedSeason)
+        if (!hasSelected) {
+          handleSeasonSelect(seasons[0].season_number)
+        }
+      })
+      .catch((err) => {
+        if (canceled) return
+        console.error('Failed to load seasons:', err)
+        setSeasonError('Unable to load seasons right now.')
+      })
+      .finally(() => {
+        if (!canceled) setSeasonsLoading(false)
+      })
+
+    return () => { canceled = true }
+  }, [isTV, params.id, selectedSeason, handleSeasonSelect])
+
+  useEffect(() => {
+    if (!isTV) return
+    setSeasonDetail(null)
+    setSeasonDetailError(null)
+    setSeasonDetailLoading(true)
+    let canceled = false
+
+    fetch(`/api/tmdb?endpoint=tv/${params.id}/season/${selectedSeason}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Status ${res.status}`)
+        const detail: SeasonDetail = await res.json()
+        if (canceled) return
+        setSeasonDetail({
+          ...detail,
+          episodes: (detail.episodes || []).slice().sort((a, b) => a.episode_number - b.episode_number),
+        })
+      })
+      .catch((err) => {
+        if (canceled) return
+        console.error('Failed to load season detail:', err)
+        setSeasonDetailError('Unable to load episodes right now.')
+      })
+      .finally(() => {
+        if (!canceled) setSeasonDetailLoading(false)
+      })
+
+    return () => { canceled = true }
+  }, [isTV, params.id, selectedSeason])
+
+  useEffect(() => {
+    if (!seasonDetail || seasonDetail.episodes.length === 0) return
+    const firstEpisode = seasonDetail.episodes[0].episode_number
+    if (firstEpisode && firstEpisode !== selectedEpisode) {
+      setSelectedEpisode(firstEpisode)
+      updateQueryParams(selectedSeason, firstEpisode)
+    }
+  }, [seasonDetail, selectedEpisode, selectedSeason, updateQueryParams])
+
   return (
     <div className="watch-page">
       <nav className="watch-nav">
@@ -150,6 +323,76 @@ export default function WatchPage({ params }: { params: { id: string } }) {
           </button>
         ))}
       </div>
+
+      {isTV && (
+        <div className="season-panel">
+          <div className="season-column">
+            <div className="season-label-row">
+              <span className="season-label-title">Seasons</span>
+              {seasonList.length > 0 && (
+                <span className="season-label-status">S{selectedSeason} · {seasonDetail?.episodes.length ?? 0} eps</span>
+              )}
+            </div>
+            {seasonsLoading ? (
+              <p className="season-helper">Loading seasons…</p>
+            ) : seasonError ? (
+              <p className="season-helper">{seasonError}</p>
+            ) : seasonList.length === 0 ? (
+              <p className="season-helper">No seasons are available yet.</p>
+            ) : (
+              <div className="season-list">
+                {seasonList.map((seasonItem) => (
+                  <button
+                    key={`${seasonItem.id}-${seasonItem.season_number}`}
+                    type="button"
+                    className={`season-chip ${seasonItem.season_number === selectedSeason ? 'active' : ''}`}
+                    onClick={() => handleSeasonSelect(seasonItem.season_number)}
+                  >
+                    <span>{seasonItem.name || `Season ${seasonItem.season_number}`}</span>
+                    <small>{seasonItem.episode_count ?? 0} eps</small>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="episode-column">
+            <div className="season-label-row">
+              <span className="season-label-title">Episodes</span>
+              {seasonDetail && seasonDetail.episodes.length > 0 && (
+                <span className="season-label-status">S{selectedSeason} · E{selectedEpisode}</span>
+              )}
+            </div>
+            {seasonDetailLoading ? (
+              <p className="season-helper">Loading episodes…</p>
+            ) : seasonDetailError ? (
+              <p className="season-helper">{seasonDetailError}</p>
+            ) : !seasonDetail || seasonDetail.episodes.length === 0 ? (
+              <p className="season-helper">No episodes found for this season.</p>
+            ) : (
+              <div className="episode-list">
+                {seasonDetail.episodes.map((ep) => (
+                  <button
+                    key={ep.id ?? `${selectedSeason}-${ep.episode_number}`}
+                    type="button"
+                    className={`episode-card ${ep.episode_number === selectedEpisode ? 'active' : ''}`}
+                    onClick={() => handleEpisodeSelect(ep.episode_number)}
+                  >
+                    <div>
+                      <div className="episode-title">
+                        Episode {ep.episode_number}{ep.name ? ` · ${ep.name}` : ''}
+                      </div>
+                      <div className="episode-meta">
+                        {formatAirDate(ep.air_date)}
+                        {ep.runtime ? ` · ${ep.runtime}m` : ''}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="info-panel">
         <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 38, letterSpacing: 1, marginBottom: 6, color: '#fff' }}>{movie?.title || 'Loading...'}</h1>
