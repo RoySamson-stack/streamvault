@@ -107,6 +107,9 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [isRestoring, setIsRestoring] = useState(true)
   const router = useRouter()
+  const [f1Replays, setF1Replays] = useState<F1Replay[]>([])
+  const [f1Loading, setF1Loading] = useState(true)
+  const [f1Error, setF1Error] = useState('')
 
   const todayPicks = useMemo(() => {
     const pool = [...trending, ...popular, ...topRated]
@@ -384,6 +387,7 @@ export default function HomePage() {
           <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/browse')} onKeyDown={onEnter(() => router.push('/browse'))}>Browse</span>
           <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/search')} onKeyDown={onEnter(() => router.push('/search'))}>Search</span>
           <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/sports')} onKeyDown={onEnter(() => router.push('/sports'))}>Sports</span>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/f1')} onKeyDown={onEnter(() => router.push('/f1'))}>F1</span>
           <span className={`nav-link ${currentPage === 'community' ? 'active' : ''} focusable`} role="button" tabIndex={0} onClick={() => goToPage('community')} onKeyDown={onEnter(() => goToPage('community'))}>Community</span>
           <span className={`nav-link ${currentPage === 'myspace' ? 'active' : ''} focusable`} role="button" tabIndex={0} onClick={() => goToPage('myspace')} onKeyDown={onEnter(() => goToPage('myspace'))}>My Space</span>
         </div>
@@ -429,16 +433,16 @@ export default function HomePage() {
               <span className="hchip">⭐ {heroItem?.rating?.toFixed(1) || '0.0'}</span>
             </div>
             <p className="hero-desc">{heroItem?.description?.slice(0, 200) || 'Discover unlimited entertainment on VaultSphere.'}</p>
-            <div className="hero-btns">
-              <button className="btn btn-gold" onClick={() => heroItem && handleWatch(heroItem)}>
-                <svg style={{ width: 14, height: 14, fill: 'currentColor', stroke: 'none' }} viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
-                Watch Now
-              </button>
-              <button className="btn btn-ghost" onClick={() => showToast('Added to Watchlist ✓', 'accent')}>+ Add to List</button>
-              <button className="btn btn-outline" onClick={() => { if (heroItem) handleWatch(heroItem) }}>More Info</button>
-            </div>
-          </div>
+        <div className="hero-btns">
+          <button className="btn btn-gold" onClick={() => heroItem && handleWatch(heroItem)}>
+            <svg style={{ width: 14, height: 14, fill: 'currentColor', stroke: 'none' }} viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+            Watch Now
+          </button>
+          <button className="btn btn-ghost" onClick={() => showToast('Added to Watchlist ✓', 'accent')}>+ Add to List</button>
+          <button className="btn btn-outline" onClick={() => { if (heroItem) handleWatch(heroItem) }}>More Info</button>
         </div>
+      </div>
+    </div>
 
         <div className="home-sections">
           <div style={{ height: 36 }}></div>
