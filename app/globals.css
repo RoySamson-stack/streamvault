@@ -86,7 +86,14 @@ img { display: block; }
   flex-shrink: 0;
 }
 .logo span { color: var(--text); }
-.nav-center { display: flex; align-items: center; gap: 4px; }
+.nav-center {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
 .mobile-nav-toggle {
   display: none;
   width: 40px;
@@ -831,6 +838,7 @@ img { display: block; }
     top: 100%;
     left: 0;
     right: 0;
+    transform: none;
     background: rgba(3, 3, 3, 0.95);
     flex-direction: column;
     gap: 12px;
