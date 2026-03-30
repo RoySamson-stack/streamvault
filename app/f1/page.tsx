@@ -49,6 +49,7 @@ export default function F1Page() {
   const [teamRadioError, setTeamRadioError] = useState('')
   const [replays, setReplays] = useState<F1Replay[]>([])
   const [replaysError, setReplaysError] = useState('')
+  const [selectedReplay, setSelectedReplay] = useState<F1Replay | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeMessageFilter, setActiveMessageFilter] = useState(FILTERS[0])
 
@@ -139,18 +140,18 @@ export default function F1Page() {
       <div className="f1-main">
         <div className="f1-left-panel">
           <div className="video-wrap">
-            <div className="live-badge">
-              <div className="live-dot" />
-              LIVE
-            </div>
-            <iframe
-              className="f1-iframe"
-              src="https://lovetier.bz/player/SkySportsF1"
-              allowFullScreen
-              title="Sky Sports F1"
-              loading="lazy"
-              referrerPolicy="no-referrer"
-            />
+          <div className="live-badge">
+            <div className="live-dot" />
+            {selectedReplay ? 'REPLAY' : 'LIVE'}
+          </div>
+          <iframe
+            className="f1-iframe"
+            src={selectedReplay ? normalizeUrl(selectedReplay.url) : 'https://lovetier.bz/player/SkySportsF1'}
+            allowFullScreen
+            title={selectedReplay ? `${selectedReplay.grandPrix} · ${selectedReplay.session}` : 'Sky Sports F1'}
+            loading="lazy"
+            referrerPolicy="no-referrer"
+          />
           </div>
           <div className="video-controls">
             <div className="vc-live">
@@ -241,20 +242,26 @@ export default function F1Page() {
               <span className="f1-year-tag">{YEAR}</span>
             </div>
             <div className="f1-replay-grid">
-              {loading ? (
-                <p className="f1-helper">Fetching replay list…</p>
-              ) : replaysError ? (
-                <p className="f1-helper">{replaysError}</p>
-              ) : replays.length === 0 ? (
-                <p className="f1-helper">No replay links available yet.</p>
-              ) : (
-                replays.slice(0, 8).map((entry, idx) => (
-                  <a key={`${entry.grandPrix}-${entry.session}-${idx}`} href={normalizeUrl(entry.url)} target="_blank" rel="noreferrer" className="f1-replay-card">
-                    <span className="f1-replay-gp">{entry.year} · {entry.grandPrix}</span>
-                    <span className="f1-replay-session">{entry.session}</span>
-                  </a>
-                ))
-              )}
+            {loading ? (
+              <p className="f1-helper">Fetching replay list…</p>
+            ) : replaysError ? (
+              <p className="f1-helper">{replaysError}</p>
+            ) : replays.length === 0 ? (
+              <p className="f1-helper">No replay links available yet.</p>
+            ) : (
+              replays.slice(0, 8).map((entry, idx) => (
+                <button
+                  className={`f1-replay-card ${selectedReplay === entry ? 'active' : ''}`}
+                  key={`${entry.grandPrix}-${entry.session}-${idx}`}
+                  type="button"
+                  onClick={() => setSelectedReplay(entry)}
+                >
+                  <span className="f1-replay-gp">{entry.year} · {entry.grandPrix}</span>
+                  <span className="f1-replay-session">{entry.session}</span>
+                  <span className="f1-replay-action">{selectedReplay === entry ? 'Now Playing' : 'Watch Replay'}</span>
+                </button>
+              ))
+            )}
             </div>
             <div className="f1-session-list">
               <div className="sidebar-head">

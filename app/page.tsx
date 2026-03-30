@@ -100,6 +100,7 @@ export default function HomePage() {
   const [toastMsg, setToastMsg] = useState('')
   const [toastType, setToastType] = useState('')
   const [watchHistory, setWatchHistory] = useState<WatchHistoryItem[]>([])
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const playerVideoRef = useRef<HTMLDivElement>(null)
   const testedRef = useRef(new Set())
@@ -341,6 +342,7 @@ export default function HomePage() {
       setSelectedMovie(null)
       setPlaying(false)
     }
+    setMobileNavOpen(false)
   }
 
   const handleSearch = async (query: string) => {
@@ -350,6 +352,11 @@ export default function HomePage() {
   const handleWatch = (item: ContentItem) => {
     updateWatchHistory(item, 0)
     window.location.href = `/watch/${item.id}?type=${item.type}`
+  }
+
+  const handleNavAction = (action: () => void) => {
+    action()
+    setMobileNavOpen(false)
   }
 
 
@@ -382,14 +389,23 @@ export default function HomePage() {
 
       <nav id="nav" className={navScrolled ? 'scrolled' : 'solid'}>
         <div className="logo focusable" role="button" tabIndex={0} onClick={() => goToPage('home')} onKeyDown={onEnter(() => goToPage('home'))}>VAULT<span>SPHERE</span></div>
-        <div className="nav-center">
-          <span className={`nav-link ${currentPage === 'home' ? 'active' : ''} focusable`} role="button" tabIndex={0} onClick={() => goToPage('home')} onKeyDown={onEnter(() => goToPage('home'))}>Home</span>
-          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/browse')} onKeyDown={onEnter(() => router.push('/browse'))}>Browse</span>
-          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/search')} onKeyDown={onEnter(() => router.push('/search'))}>Search</span>
-          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/sports')} onKeyDown={onEnter(() => router.push('/sports'))}>Sports</span>
-          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/f1')} onKeyDown={onEnter(() => router.push('/f1'))}>F1</span>
-          <span className={`nav-link ${currentPage === 'community' ? 'active' : ''} focusable`} role="button" tabIndex={0} onClick={() => goToPage('community')} onKeyDown={onEnter(() => goToPage('community'))}>Community</span>
-          <span className={`nav-link ${currentPage === 'myspace' ? 'active' : ''} focusable`} role="button" tabIndex={0} onClick={() => goToPage('myspace')} onKeyDown={onEnter(() => goToPage('myspace'))}>My Space</span>
+        <button
+          className="mobile-nav-toggle"
+          aria-expanded={mobileNavOpen}
+          aria-label="Open navigation menu"
+          onClick={() => setMobileNavOpen(prev => !prev)}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <div className={`nav-center ${mobileNavOpen ? 'open' : ''}`}>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => handleNavAction(() => router.push('/browse'))} onKeyDown={onEnter(() => handleNavAction(() => router.push('/browse')))}>Browse</span>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => handleNavAction(() => router.push('/search'))} onKeyDown={onEnter(() => handleNavAction(() => router.push('/search')))}>Search</span>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => handleNavAction(() => router.push('/sports'))} onKeyDown={onEnter(() => handleNavAction(() => router.push('/sports')))}>Sports</span>
+          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => handleNavAction(() => router.push('/f1'))} onKeyDown={onEnter(() => handleNavAction(() => router.push('/f1')))}>F1</span>
+          <span className={`nav-link ${currentPage === 'community' ? 'active' : ''} focusable`} role="button" tabIndex={0} onClick={() => handleNavAction(() => goToPage('community'))} onKeyDown={onEnter(() => handleNavAction(() => goToPage('community')))}>Community</span>
+          <span className={`nav-link ${currentPage === 'myspace' ? 'active' : ''} focusable`} role="button" tabIndex={0} onClick={() => handleNavAction(() => goToPage('myspace'))} onKeyDown={onEnter(() => handleNavAction(() => goToPage('myspace')))}>My Space</span>
         </div>
         <div className="nav-right">
           <button className="nav-icon-btn" onClick={() => setNotifOpen(!notifOpen)}>
@@ -403,6 +419,7 @@ export default function HomePage() {
         </div>
       </nav>
 
+      <div className={`mobile-nav-backdrop ${mobileNavOpen ? 'visible' : ''}`} onClick={() => setMobileNavOpen(false)} />
       <div className={`notif-dropdown ${notifOpen ? 'open' : ''}`}>
         <div className="nd-head"><h3>Notifications</h3><span onClick={() => showToast('All marked as read ✓')}>Mark all read</span></div>
         <div className="notif-item">
