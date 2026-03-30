@@ -36,6 +36,13 @@ interface TVShow {
   genre_ids: number[]
 }
 
+interface F1Replay {
+  year: string
+  grandPrix: string
+  session: string
+  url: string
+}
+
 interface ContentItem {
   id: string
   title: string
