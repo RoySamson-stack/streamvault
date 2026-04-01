@@ -1,6 +1,6 @@
 // app/auth/layout.tsx
-import Link from 'next/link'
 import type { Metadata } from 'next'
+import TopNav from '../components/TopNav'
 
 export const metadata: Metadata = { title: 'StreamVault — Sign In' }
 
@@ -10,23 +10,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       minHeight: '100vh', background: 'var(--bg)',
       display: 'flex', flexDirection: 'column',
     }}>
-      <nav style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 48px', height: 'var(--nav-h)',
-        background: 'rgba(8,8,16,0.95)', backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255,255,255,.04)',
-      }}>
-        <Link href="/" style={{
-          fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3,
-          background: 'linear-gradient(135deg,#e50914,#ff6b35)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          textDecoration: 'none',
-        }}>StreamVault</Link>
-        <Link href="/auth/login" style={{ fontSize: 13, color: 'var(--muted)', textDecoration: 'none' }}>
-          Sign In
-        </Link>
-      </nav>
+      <TopNav />
 
       <div style={{ position: 'fixed', inset: 0, zIndex: 0 }}>
         <div style={{
@@ -45,7 +29,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         }} />
       </div>
 
-      <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 'var(--nav-h)' }}>
+      <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 'var(--nav)' }}>
         {children}
       </div>
     </div>

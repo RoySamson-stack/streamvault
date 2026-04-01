@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import TopNav from '../components/TopNav'
 
 const YEAR = 2026
 
@@ -102,42 +103,10 @@ export default function F1Page() {
   }, [])
 
   return (
-    <div className="f1-page">
-      <nav className="f1-nav">
-        <div className="f1-nav-left">
-          <button className="nav-btn"><span className="logo">F1LIVE<span>TRACK</span></span></button>
-          <button className="nav-btn">Home</button>
-          <button className="nav-btn">Replays</button>
-          <div className="nav-divider" />
-          <div className="temp-info">
-            <div className="temp-item">
-              <span className="temp-label">AIR</span>
-              <span>--</span>
-            </div>
-            <div className="temp-item">
-              <span className="temp-label">TRACK</span>
-              <span>--</span>
-            </div>
-            <div className="temp-item">
-              <span>STATUS</span>
-              <span>--</span>
-            </div>
-          </div>
-        </div>
-        <div className="nav-right">
-          <button className="discord-btn">Join Discord</button>
-          <div className="next-session">
-            <div className="next-dot" />
-            <div className="next-text">
-              <div className="next-label">Next Session</div>
-              <div className="next-value">Unavailable</div>
-            </div>
-            <div className="next-arrow">›</div>
-          </div>
-        </div>
-      </nav>
-
-      <div className="f1-main">
+    <>
+      <TopNav active="f1" />
+      <div className="f1-page">
+        <div className="f1-main">
         <div className="f1-left-panel">
           <div className="video-wrap">
           <div className="live-badge">
@@ -285,6 +254,7 @@ export default function F1Page() {
           </div>
         </aside>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

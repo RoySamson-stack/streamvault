@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { poster, backdrop, getGenreNames } from '@/lib/tmdb'
+import TopNav from './components/TopNav'
 
 interface WatchHistoryItem {
   id: string
@@ -97,7 +98,6 @@ export default function HomePage() {
   const [selectedFilter, setSelectedFilter] = useState('All')
   const [settingsPanel, setSettingsPanel] = useState('account')
   const [profileTab, setProfileTab] = useState('watchlist')
-  const [notifOpen, setNotifOpen] = useState(false)
   const [selectedMovie, setSelectedMovie] = useState<ContentItem | null>(null)
   const [embedUrl, setEmbedUrl] = useState('')
   const [currentProvider, setCurrentProvider] = useState(0)
@@ -107,7 +107,6 @@ export default function HomePage() {
   const [toastMsg, setToastMsg] = useState('')
   const [toastType, setToastType] = useState('')
   const [watchHistory, setWatchHistory] = useState<WatchHistoryItem[]>([])
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const playerVideoRef = useRef<HTMLDivElement>(null)
   const testedRef = useRef(new Set())
@@ -344,12 +343,10 @@ export default function HomePage() {
   const goToPage = (page: string) => {
     setCurrentPage(page)
     window.scrollTo(0, 0)
-    setNotifOpen(false)
     if (page !== 'player') {
       setSelectedMovie(null)
       setPlaying(false)
     }
-    setMobileNavOpen(false)
   }
 
   const handleSearch = async (query: string) => {
@@ -360,13 +357,6 @@ export default function HomePage() {
     updateWatchHistory(item, 0)
     window.location.href = `/watch/${item.id}?type=${item.type}`
   }
-
-  const handleNavAction = (action: () => void) => {
-    action()
-    setMobileNavOpen(false)
-  }
-
-
 
   const showToast = (msg: string, type = '') => {
     setToastMsg(msg)
@@ -384,7 +374,7 @@ export default function HomePage() {
     return all
   }
 
-  const navScrolled = typeof window !== 'undefined' && window.scrollY > 60
+  const activeNav = currentPage === 'community' || currentPage === 'myspace' ? currentPage : undefined
 
   return (
     <>
@@ -394,50 +384,18 @@ export default function HomePage() {
       </section>
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
 
-      <nav id="nav" className={navScrolled ? 'scrolled' : 'solid'}>
-        <div className="logo focusable" role="button" tabIndex={0} onClick={() => goToPage('home')} onKeyDown={onEnter(() => goToPage('home'))}>VAULT<span>SPHERE</span></div>
-        <button
-          className="mobile-nav-toggle"
-          aria-expanded={mobileNavOpen}
-          aria-label="Open navigation menu"
-          onClick={() => setMobileNavOpen(prev => !prev)}
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        <div className={`nav-center ${mobileNavOpen ? 'open' : ''}`}>
-          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => handleNavAction(() => router.push('/browse'))} onKeyDown={onEnter(() => handleNavAction(() => router.push('/browse')))}>Browse</span>
-          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => handleNavAction(() => router.push('/search'))} onKeyDown={onEnter(() => handleNavAction(() => router.push('/search')))}>Search</span>
-          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => handleNavAction(() => router.push('/sports'))} onKeyDown={onEnter(() => handleNavAction(() => router.push('/sports')))}>Sports</span>
-          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => handleNavAction(() => router.push('/f1'))} onKeyDown={onEnter(() => handleNavAction(() => router.push('/f1')))}>F1</span>
-          <span className={`nav-link ${currentPage === 'community' ? 'active' : ''} focusable`} role="button" tabIndex={0} onClick={() => handleNavAction(() => goToPage('community'))} onKeyDown={onEnter(() => handleNavAction(() => goToPage('community')))}>Community</span>
-          <span className={`nav-link ${currentPage === 'myspace' ? 'active' : ''} focusable`} role="button" tabIndex={0} onClick={() => handleNavAction(() => goToPage('myspace'))} onKeyDown={onEnter(() => handleNavAction(() => goToPage('myspace')))}>My Space</span>
-        </div>
-        <div className="nav-right">
-          <button className="nav-icon-btn" onClick={() => setNotifOpen(!notifOpen)}>
-            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            <span className="notif-dot"></span>
-          </button>
-          <button className="nav-icon-btn" onClick={() => goToPage('settings')}>
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          </button>
-          <div className="avatar-btn focusable" role="button" tabIndex={0} onClick={() => goToPage('myspace')} onKeyDown={onEnter(() => goToPage('myspace'))}>A</div>
-        </div>
-      </nav>
-
-      <div className={`mobile-nav-backdrop ${mobileNavOpen ? 'visible' : ''}`} onClick={() => setMobileNavOpen(false)} />
-      <div className={`notif-dropdown ${notifOpen ? 'open' : ''}`}>
-        <div className="nd-head"><h3>Notifications</h3><span onClick={() => showToast('All marked as read ✓')}>Mark all read</span></div>
-        <div className="notif-item">
-          <div className="notif-dot2"></div>
-          <div className="notif-item-text"><h4>New Episode Available</h4><p>Breaking Bad — Episode 62 is now streaming</p><span>2 minutes ago</span></div>
-        </div>
-        <div className="notif-item">
-          <div className="notif-dot2"></div>
-          <div className="notif-item-text"><h4>Coming Soon</h4><p>New releases arriving this week</p><span>1 hour ago</span></div>
-        </div>
-      </div>
+      <TopNav
+        active={activeNav}
+        onNavigate={(target) => {
+          if (target === 'home') return goToPage('home')
+          if (target === 'community' || target === 'myspace' || target === 'settings') return goToPage(target)
+          if (target === 'browse') return router.push('/browse')
+          if (target === 'search') return router.push('/search')
+          if (target === 'sports') return router.push('/sports')
+          if (target === 'f1') return router.push('/f1')
+        }}
+        onMarkAllRead={() => showToast('All marked as read ✓')}
+      />
 
       <div className={`toast ${toastMsg ? 'show' : ''} ${toastType}`}>{toastMsg}</div>
 

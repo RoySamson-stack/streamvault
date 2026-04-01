@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState, useRef } from 'react'
 import { poster, backdrop } from '@/lib/tmdb'
+import TopNav from '../../components/TopNav'
 
 interface ContentItem {
   id: string
@@ -283,12 +284,12 @@ export default function WatchPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="watch-page">
-      <nav className="watch-nav">
-        <a href="/" className="watch-logo">VAULT<span style={{ color: '#fff' }}>SPHERE</span></a>
-        <span style={{ fontSize: 12, color: videoLoaded ? '#4ade80' : '#f5c518' }}>
+      <TopNav />
+      <div className="watch-status">
+        <span className={`watch-status-pill ${videoLoaded ? 'ok' : 'warn'}`}>
           {videoLoaded ? '● Playing' : '● Loading...'}
         </span>
-      </nav>
+      </div>
 
       <div className="player-container">
         <div

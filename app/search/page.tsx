@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { poster, backdrop, getGenreNames } from '@/lib/tmdb'
+import TopNav from '../components/TopNav'
 
 interface ContentItem {
   id: string
@@ -79,18 +80,7 @@ export default function SearchPage() {
     <>
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
 
-      <nav id="nav" className="solid">
-        <div className="logo focusable" role="button" tabIndex={0} onClick={() => router.push('/')} onKeyDown={onEnter(() => router.push('/'))}>VAULT<span>SPHERE</span></div>
-        <div className="nav-center">
-          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/')} onKeyDown={onEnter(() => router.push('/'))}>Home</span>
-          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/browse')} onKeyDown={onEnter(() => router.push('/browse'))}>Browse</span>
-          <span className="nav-link active focusable" role="button" tabIndex={0} onClick={() => router.push('/search')} onKeyDown={onEnter(() => router.push('/search'))}>Search</span>
-          <span className="nav-link focusable" role="button" tabIndex={0} onClick={() => router.push('/sports')} onKeyDown={onEnter(() => router.push('/sports'))}>Sports</span>
-        </div>
-        <div className="nav-right">
-          <div className="avatar-btn focusable" role="button" tabIndex={0} onClick={() => router.push('/')} onKeyDown={onEnter(() => router.push('/'))}>A</div>
-        </div>
-      </nav>
+      <TopNav active="search" />
 
       <div className="search-page">
         <div className="search-top"><h1>Find <span>Anything</span></h1><p>Millions of movies, shows, anime, documentaries and more</p></div>

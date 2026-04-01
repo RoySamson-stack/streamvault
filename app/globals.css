@@ -890,8 +890,11 @@ img { display: block; }
 }
 
 /* Watch Page Styles */
-.watch-page { background: #07090d; min-height: 100vh; color: #f0f2f5; font-family: 'DM Sans', sans-serif; }
-.watch-nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 48px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.watch-page { background: #07090d; min-height: 100vh; color: #f0f2f5; font-family: 'DM Sans', sans-serif; padding-top: var(--nav); }
+.watch-status { display: flex; justify-content: flex-end; padding: 12px 48px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.watch-status-pill { font-size: 12px; letter-spacing: 0.02em; padding: 6px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.1); }
+.watch-status-pill.ok { color: #4ade80; background: rgba(74,222,128,0.08); }
+.watch-status-pill.warn { color: #f5c518; background: rgba(245,197,24,0.08); }
 .watch-logo { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: #e8c96d; text-decoration: none; }
 .player-container { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; }
 .player-container iframe { position: relative; z-index: 1; }
