@@ -41,6 +41,14 @@ export default function TopNav({ active, onNavigate, onMarkAllRead }: TopNavProp
     router.push('/')
   }
 
+  const goHome = () => {
+    try {
+      localStorage.removeItem('vaultsphere_current_page')
+      localStorage.removeItem('vaultsphere_selected_movie')
+    } catch (err) {}
+    router.push('/')
+  }
+
   const handleNavigate = (target: string, href?: string) => {
     if (onNavigate) {
       onNavigate(target)
@@ -49,7 +57,7 @@ export default function TopNav({ active, onNavigate, onMarkAllRead }: TopNavProp
       return
     }
     if (target === 'home') {
-      router.push('/')
+      goHome()
     } else if (href) {
       router.push(href)
     } else if (HOME_PAGES.has(target)) {

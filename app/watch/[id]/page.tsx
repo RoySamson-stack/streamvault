@@ -129,6 +129,13 @@ export default function WatchPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     if (!isTV) return
+    loadedRef.current = false
+    setVideoLoaded(false)
+    setLoading(true)
+  }, [embedUrl, isTV])
+
+  useEffect(() => {
+    if (!isTV) return
     const paramsSnapshot = new URLSearchParams(searchParamsString)
     const urlSeason = Number(paramsSnapshot.get('s'))
     const urlEpisode = Number(paramsSnapshot.get('e'))
@@ -275,8 +282,10 @@ export default function WatchPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     if (!seasonDetail || seasonDetail.episodes.length === 0) return
+    const hasEpisode = seasonDetail.episodes.some((ep) => ep.episode_number === selectedEpisode)
+    if (hasEpisode) return
     const firstEpisode = seasonDetail.episodes[0].episode_number
-    if (firstEpisode && firstEpisode !== selectedEpisode) {
+    if (firstEpisode) {
       setSelectedEpisode(firstEpisode)
       updateQueryParams(selectedSeason, firstEpisode)
     }
@@ -303,7 +312,7 @@ export default function WatchPage({ params }: { params: { id: string } }) {
         )}
         <iframe 
           ref={iframeRef}
-          key={`${currentProvider}-${params.id}`}
+          key={`${currentProvider}-${params.id}-${selectedSeason}-${selectedEpisode}`}
           src={embedUrl} 
           style={{ width: '100%', height: '100%', border: 'none' }}
           allowFullScreen
