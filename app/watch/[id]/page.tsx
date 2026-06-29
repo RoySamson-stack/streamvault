@@ -78,9 +78,23 @@ export default function WatchPage({ params }: { params: { id: string } }) {
   const episode = searchParams.get('e')
 
   const [movie, setMovie] = useState<ContentItem | null>(null)
-  const [currentProvider, setCurrentProvider] = useState(0)
+  const [currentProvider, setCurrentProvider] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('vaultsphere_fastest_provider')
+      if (saved) {
+        const idx = providers.findIndex(p => p.name === saved)
+        if (idx !== -1) return idx
+      }
+    }
+    return 0
+  })
+
+  const saveProviderPreference = (i: number) => {
+    try { localStorage.setItem('vaultsphere_fastest_provider', providers[i].name) } catch {}
+  }
   const [loading, setLoading] = useState(true)
   const [videoLoaded, setVideoLoaded] = useState(false)
+  const [hasStarted, setHasStarted] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const switchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const loadedRef = useRef(false)
@@ -118,7 +132,8 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     if (!isTV || episodeNumber === selectedEpisode) return
     setSelectedEpisode(episodeNumber)
     updateQueryParams(selectedSeason, episodeNumber)
-  }, [isTV, selectedEpisode, selectedSeason, updateQueryParams])
+    if (!hasStarted) setHasStarted(true)
+  }, [isTV, selectedEpisode, selectedSeason, updateQueryParams, hasStarted])
 
   const embedUrl = providers[currentProvider].build(
     type,
@@ -291,12 +306,22 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     }
   }, [seasonDetail, selectedEpisode, selectedSeason, updateQueryParams])
 
+  const startPlaying = (providerIdx?: number) => {
+    if (providerIdx !== undefined) {
+      setCurrentProvider(providerIdx)
+      saveProviderPreference(providerIdx)
+    }
+    loadedRef.current = false
+    setVideoLoaded(false)
+    setHasStarted(true)
+  }
+
   return (
     <div className="watch-page">
       <TopNav />
       <div className="watch-status">
-        <span className={`watch-status-pill ${videoLoaded ? 'ok' : 'warn'}`}>
-          {videoLoaded ? '● Playing' : '● Loading...'}
+        <span className={`watch-status-pill ${videoLoaded ? 'ok' : hasStarted ? 'warn' : ''}`}>
+          {videoLoaded ? '● Playing' : hasStarted ? '● Loading...' : '● Ready'}
         </span>
       </div>
 
@@ -305,34 +330,79 @@ export default function WatchPage({ params }: { params: { id: string } }) {
           className="player-backdrop"
           style={movie?.backdrop ? { backgroundImage: `url(${movie.backdrop})` } : undefined}
         />
-        {loading && (
-          <div className="player-loading">
-            <div className="spinner" />
+        {!hasStarted ? (
+          <div className="player-preplay">
+            <div className="preplay-info">
+              <h2 className="preplay-title">{movie?.title || 'Loading...'}</h2>
+              <p className="preplay-meta">
+                {movie?.year} · {movie?.genre?.slice(0, 2).join(', ')} · HD
+              </p>
+              {movie?.description && (
+                <p className="preplay-desc">{movie.description.slice(0, 150)}{movie.description.length > 150 ? '…' : ''}</p>
+              )}
+              <div className="preplay-actions">
+                <button className="preplay-play-btn" onClick={() => startPlaying()}>
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5 3l14 9-14 9V3z"/></svg>
+                  Play
+                </button>
+                <div className="preplay-server-dropdown">
+                  <button className="preplay-server-toggle">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                    {providers[currentProvider].name}
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                  </button>
+                  <div className="preplay-server-menu">
+                    {providers.map((p, i) => (
+                      <button
+                        key={p.name}
+                        className={`preplay-server-item ${i === currentProvider ? 'active' : ''}`}
+                        onClick={() => startPlaying(i)}
+                      >
+                        <span className="preplay-server-dot" />
+                        {p.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        ) : (
+          <>
+            {loading && (
+              <div className="player-loading">
+                <div className="spinner" />
+              </div>
+            )}
+            <iframe 
+              ref={iframeRef}
+              key={`${currentProvider}-${params.id}-${selectedSeason}-${selectedEpisode}`}
+              src={embedUrl} 
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              allowFullScreen
+              allow="autoplay; encrypted-media"
+              sandbox="allow-scripts allow-same-origin allow-forms"
+              referrerPolicy="no-referrer"
+              onLoad={handleIframeLoad}
+            />
+          </>
         )}
-        <iframe 
-          ref={iframeRef}
-          key={`${currentProvider}-${params.id}-${selectedSeason}-${selectedEpisode}`}
-          src={embedUrl} 
-          style={{ width: '100%', height: '100%', border: 'none' }}
-          allowFullScreen
-          allow="autoplay; encrypted-media"
-          onLoad={handleIframeLoad}
-        />
       </div>
 
-      <div className="provider-bar">
-        <span style={{ fontSize: 11, color: '#6b7a94', marginRight: 4 }}>Sources:</span>
-        {providers.map((p, i) => (
-          <button 
-            key={p.name} 
-            className={`provider-btn ${i === currentProvider ? 'active' : ''}`}
-            onClick={() => { loadedRef.current = false; setCurrentProvider(i); setVideoLoaded(false) }}
-          >
-            {p.name}
-          </button>
-        ))}
-      </div>
+      {hasStarted && (
+        <div className="provider-bar">
+          <span style={{ fontSize: 11, color: '#6b7a94', marginRight: 4 }}>Sources:</span>
+          {providers.map((p, i) => (
+            <button 
+              key={p.name} 
+              className={`provider-btn ${i === currentProvider ? 'active' : ''}`}
+              onClick={() => { loadedRef.current = false; setCurrentProvider(i); setVideoLoaded(false); saveProviderPreference(i) }}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {isTV && (
         <div className="season-panel">

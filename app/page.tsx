@@ -4,7 +4,10 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { poster, backdrop, getGenreNames } from '@/lib/tmdb'
-import TopNav from './components/TopNav'
+import TopNav, { type Notification } from './components/TopNav'
+import { measureBandwidth, testProviderConnectivity, recordSuccess, recordFailure } from '@/lib/providers'
+import { buildProfile, recommend as recommendItems } from '@/lib/recommendations'
+import { getNetworkState, onNetworkChange } from '@/lib/network'
 
 interface WatchHistoryItem {
   id: string
@@ -54,6 +57,9 @@ interface ContentItem {
   genre: string[]
   type: 'movie' | 'tv'
   description: string
+  releaseDate?: string
+  badge?: string
+  badgeColor?: 'red' | 'blue' | 'gold'
 }
 
 interface Provider {
@@ -84,6 +90,17 @@ const GENRES = [
   { name: 'Animation', icon: '🎪', bg: '#0d1a1a', c: '#7cf7f0', count: '2,453 titles' },
 ]
 
+const formatTimeAgo = (t: number): string => {
+  const diff = Date.now() - t
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  return `${days}d ago`
+}
+
 export default function HomePage() {
   const [trending, setTrending] = useState<ContentItem[]>([])
   const [popular, setPopular] = useState<ContentItem[]>([])
@@ -107,6 +124,9 @@ export default function HomePage() {
   const [toastMsg, setToastMsg] = useState('')
   const [toastType, setToastType] = useState('')
   const [watchHistory, setWatchHistory] = useState<WatchHistoryItem[]>([])
+  const [notifRead, setNotifRead] = useState<Set<string>>(new Set())
+  const [bandwidth, setBandwidth] = useState<{ mbps: number; verdict: string } | null>(null)
+  const [isOffline, setIsOffline] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const playerVideoRef = useRef<HTMLDivElement>(null)
   const testedRef = useRef(new Set())
@@ -134,6 +154,54 @@ export default function HomePage() {
     return picks
   }, [trending, popular, topRated])
 
+  const notifications: Notification[] = useMemo(() => {
+    const list: Notification[] = []
+
+    if (watchHistory.length > 0) {
+      watchHistory.slice(0, 3).forEach(h => {
+        if (h.progress < 100) {
+          list.push({
+            id: `watch-${h.id}`,
+            title: 'Continue Watching',
+            body: `${h.title} — ${h.progress}% watched`,
+            time: h.lastWatched ? formatTimeAgo(new Date(h.lastWatched).getTime()) : 'Recently',
+            read: notifRead.has(`watch-${h.id}`),
+          })
+        }
+      })
+    }
+
+    if (trending.length > 0) {
+      list.push({
+        id: 'trending',
+        title: 'Trending Now',
+        body: `${trending[0]?.title || 'New titles'} are trending this week`,
+        time: 'Today',
+        read: notifRead.has('trending'),
+      })
+    }
+
+    if (popular.length > 4 && list.length < 5) {
+      list.push({
+        id: 'new-arrivals',
+        title: 'New Arrivals',
+        body: `${popular.length}+ new movies and shows added`,
+        time: 'This week',
+        read: notifRead.has('new-arrivals'),
+      })
+    }
+
+    return list
+  }, [watchHistory, trending, popular, notifRead])
+
+  const markNotifRead = (id: string) => {
+    setNotifRead(prev => {
+      const next = new Set(prev)
+      next.add(id)
+      return next
+    })
+  }
+
   const onEnter = (action: () => void) => (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
@@ -141,29 +209,44 @@ export default function HomePage() {
     }
   }
 
-  const transformMovie = (m: Movie): ContentItem => ({
-    id: String(m.id),
-    title: m.title || '',
-    poster: poster(m.poster_path),
-    backdrop: backdrop(m.backdrop_path),
-    rating: m.vote_average || 0,
-    year: m.release_date ? parseInt(String(m.release_date).split('-')[0]) : 2024,
-    genre: getGenreNames(m.genre_ids ?? []),
-    type: 'movie',
-    description: m.overview || '',
-  })
+  const isUpcoming = (date: string | undefined) => {
+    if (!date) return false
+    return new Date(date) > new Date()
+  }
 
-  const transformTV = (t: TVShow): ContentItem => ({
-    id: String(t.id),
-    title: t.name || '',
-    poster: poster(t.poster_path),
-    backdrop: backdrop(t.backdrop_path),
-    rating: t.vote_average || 0,
-    year: t.first_air_date ? parseInt(String(t.first_air_date).split('-')[0]) : 2024,
-    genre: getGenreNames(t.genre_ids ?? []),
-    type: 'tv',
-    description: t.overview || '',
-  })
+  const transformMovie = (m: Movie): ContentItem => {
+    const upcoming = isUpcoming(m.release_date)
+    return {
+      id: String(m.id),
+      title: m.title || '',
+      poster: poster(m.poster_path),
+      backdrop: backdrop(m.backdrop_path),
+      rating: m.vote_average || 0,
+      year: m.release_date ? parseInt(String(m.release_date).split('-')[0]) : 2024,
+      genre: getGenreNames(m.genre_ids ?? []),
+      type: 'movie',
+      description: m.overview || '',
+      releaseDate: m.release_date || undefined,
+      ...(upcoming ? { badge: 'COMING SOON', badgeColor: 'blue' as const } : {}),
+    }
+  }
+
+  const transformTV = (t: TVShow): ContentItem => {
+    const upcoming = isUpcoming(t.first_air_date)
+    return {
+      id: String(t.id),
+      title: t.name || '',
+      poster: poster(t.poster_path),
+      backdrop: backdrop(t.backdrop_path),
+      rating: t.vote_average || 0,
+      year: t.first_air_date ? parseInt(String(t.first_air_date).split('-')[0]) : 2024,
+      genre: getGenreNames(t.genre_ids ?? []),
+      type: 'tv',
+      description: t.overview || '',
+      releaseDate: t.first_air_date || undefined,
+      ...(upcoming ? { badge: 'COMING SOON', badgeColor: 'blue' as const } : {}),
+    }
+  }
 
   useEffect(() => {
     const saved = localStorage.getItem('vaultsphere_watch_history')
@@ -182,6 +265,8 @@ export default function HomePage() {
         }
       } catch (e) {}
     }
+    localStorage.removeItem('vaultsphere_current_page')
+    localStorage.removeItem('vaultsphere_selected_movie')
     setIsRestoring(false)
   }, [])
 
@@ -205,36 +290,24 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    async function fetchData() {
+    async function fetchRow(name: string, endpoint: string, tv: boolean, cb: (items: ContentItem[]) => void) {
       try {
-        const [trendingRes, popularRes, popularTVRes, topRatedRes, animeRes] = await Promise.all([
-          fetch(`/api/tmdb?endpoint=trending/movie/week`),
-          fetch(`/api/tmdb?endpoint=movie/popular`),
-          fetch(`/api/tmdb?endpoint=tv/popular`),
-          fetch(`/api/tmdb?endpoint=movie/top_rated`),
-          fetch(`/api/tmdb?endpoint=discover/tv?with_origin_country=JP`),
-        ])
-        const [trendingData, popularData, popularTVData, topRatedData, animeData] = await Promise.all([
-          trendingRes.json(), popularRes.json(), popularTVRes.json(), topRatedRes.json(), animeRes.json()
-        ])
-
-        const t = trendingData.results?.map(transformMovie) || []
-        const p = popularData.results?.map(transformMovie) || []
-        const pt = popularTVData.results?.map(transformTV) || []
-        const tr = topRatedData.results?.map(transformMovie) || []
-        const a = animeData.results?.map(transformTV) || []
-
-        setTrending(t)
-        setPopular(p)
-        setPopularTV(pt)
-        setTopRated(tr)
-        setAnime(a)
-        if (t.length > 0) setHeroItem(t[0])
+        const res = await fetch(`/api/tmdb?endpoint=${endpoint}`)
+        const data = await res.json()
+        const items = (data.results || []).map(tv ? transformTV : transformMovie)
+        cb(items)
       } catch (err) {
-        console.error('Failed to fetch TMDB data:', err)
+        console.error(`Failed to fetch ${name}:`, err)
       }
     }
-    fetchData()
+    fetchRow('trending', 'trending/movie/week', false, (items) => {
+      setTrending(items)
+      if (items.length > 0) setHeroItem(items[0])
+    })
+    fetchRow('popular movies', 'movie/popular', false, setPopular)
+    fetchRow('popular tv', 'tv/popular', true, setPopularTV)
+    fetchRow('top rated', 'movie/top_rated', false, setTopRated)
+    fetchRow('anime', 'discover/tv?with_origin_country=JP', true, setAnime)
   }, [])
 
   useEffect(() => {
@@ -275,18 +348,12 @@ export default function HomePage() {
   const testProvider = async (index: number) => {
     if (testedRef.current.has(index)) return
     setProviderStates(prev => ({ ...prev, [index]: { status: 'testing', latency: null } }))
-    try {
-      const start = performance.now()
-      const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 3000)
-      await fetch(providers[index].testUrl, { method: 'HEAD', mode: 'no-cors', signal: controller.signal })
-      clearTimeout(timeout)
-      const latency = Math.round(performance.now() - start)
-      setProviderStates(prev => ({ ...prev, [index]: { status: 'ready', latency } }))
-      testedRef.current.add(index)
-    } catch {
+    const result = await testProviderConnectivity(providers[index], index)
+    testedRef.current.add(index)
+    if (result.reachable) {
+      setProviderStates(prev => ({ ...prev, [index]: { status: 'ready', latency: result.latency } }))
+    } else {
       setProviderStates(prev => ({ ...prev, [index]: { status: 'failed', latency: null } }))
-      testedRef.current.add(index)
     }
   }
 
@@ -294,17 +361,43 @@ export default function HomePage() {
     const ready = providers.map((_, i) => ({ index: i, state: providerStates[i] }))
       .filter(p => p.state?.status === 'ready' && p.state.latency !== null)
       .sort((a, b) => (a.state.latency || 999) - (b.state.latency || 999))
-    if (ready.length > 0) setCurrentProvider(ready[0].index)
+    if (ready.length > 0) {
+      const idx = ready[0].index
+      setCurrentProvider(idx)
+      try { localStorage.setItem('vaultsphere_fastest_provider', providers[idx].name) } catch {}
+    }
   }
 
-  const fastestSelectedRef = useRef(false)
   useEffect(() => {
-    const readyCount = Object.values(providerStates).filter(s => s?.status === 'ready').length
-    if (readyCount > 0 && !fastestSelectedRef.current) {
+    measureBandwidth().then(setBandwidth)
+  }, [])
+
+  const allTestedRef = useRef(false)
+  useEffect(() => {
+    const allDone = Object.keys(providerStates).length === providers.length &&
+      Object.values(providerStates).every(s => s?.status !== 'testing')
+    if (allDone && !allTestedRef.current) {
+      allTestedRef.current = true
       selectFastest()
-      fastestSelectedRef.current = true
     }
   }, [providerStates])
+
+  useEffect(() => {
+    const unsub = onNetworkChange((s) => {
+      setIsOffline(s === 'offline' || s === 'checking')
+    })
+    return unsub
+  }, [])
+
+  const recommendations = useMemo(() => {
+    if (watchHistory.length === 0 || trending.length === 0) return []
+    const profile = buildProfile(watchHistory.map(h => ({
+      genres: trending.find(t => t.id === h.id)?.genre || [],
+      type: h.type as 'movie' | 'tv',
+      year: trending.find(t => t.id === h.id)?.year || 2024,
+    })))
+    return recommendItems([...trending, ...popular, ...popularTV, ...topRated], watchHistory, profile)
+  }, [watchHistory, trending, popular, popularTV, topRated])
 
   useEffect(() => {
     if (selectedMovie) {
@@ -354,6 +447,12 @@ export default function HomePage() {
   }
 
   const handleWatch = (item: ContentItem) => {
+    // Don't navigate to watch page for unreleased content
+    if (item.releaseDate && new Date(item.releaseDate) > new Date()) {
+      const dateStr = new Date(item.releaseDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      showToast(`Coming ${dateStr}`, 'accent')
+      return
+    }
     updateWatchHistory(item, 0)
     window.location.href = `/watch/${item.id}?type=${item.type}`
   }
@@ -386,6 +485,8 @@ export default function HomePage() {
 
       <TopNav
         active={activeNav}
+        notifications={notifications}
+        onNotifClick={markNotifRead}
         onNavigate={(target) => {
           if (target === 'home') return goToPage('home')
           if (target === 'community' || target === 'myspace' || target === 'settings') return goToPage(target)
@@ -394,10 +495,24 @@ export default function HomePage() {
           if (target === 'sports') return router.push('/sports')
           if (target === 'f1') return router.push('/f1')
         }}
-        onMarkAllRead={() => showToast('All marked as read ✓')}
+        onMarkAllRead={() => {
+          setNotifRead(prev => {
+            const next = new Set(prev)
+            notifications.forEach(n => next.add(n.id))
+            return next
+          })
+          showToast('All marked as read ✓')
+        }}
       />
 
       <div className={`toast ${toastMsg ? 'show' : ''} ${toastType}`}>{toastMsg}</div>
+
+      {isOffline && (
+        <div className="offline-banner">
+          <span>📡</span>
+          <span>You're offline — showing cached content</span>
+        </div>
+      )}
 
       {/* HOME PAGE */}
       <div className={`page ${currentPage === 'home' ? 'active' : ''}`} id="page-home">
@@ -455,6 +570,33 @@ export default function HomePage() {
             </div>
           )}
 
+          {recommendations.length > 0 && (
+            <div className="row-wrap">
+              <div className="row-head"><span className="row-label">For <em>You</em></span></div>
+              <div className="cards-scroll">
+                {recommendations.slice(0, 10).map((item) => (
+                  <div key={item.id} className="card focusable" role="button" tabIndex={0} onClick={() => handleWatch(item)} onKeyDown={onEnter(() => handleWatch(item))}>
+                    <div className="card-img">
+                      {item.poster ? <img src={item.poster} alt={item.title} loading="lazy" /> : (
+                        <div style={{ width: '100%', height: '100%', background: '#131920', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <span style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: '#e8c96d', opacity: 0.45, textAlign: 'center', padding: 10 }}>{item.title}</span>
+                        </div>
+                      )}
+                      <div className="card-rate">⭐ {item.rating.toFixed(1)}</div>
+                    {item.badge && <div className="card-badge">{item.badge}</div>}
+                      <div className="card-over">
+                        <div className="card-play-circle"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></div>
+                        <div className="card-over-title">{item.title}</div>
+                        <div className="card-over-meta">{item.genre[0]} · {item.year}</div>
+                      </div>
+                    </div>
+                    <div className="card-body"><div className="card-title">{item.title}</div><div className="card-year">{item.year}</div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="row-wrap">
             <div className="row-head"><span className="row-label">Trending <em>Now</em></span><span className="row-all focusable" role="button" tabIndex={0}>See all</span></div>
             <div className="cards-scroll">
@@ -467,6 +609,7 @@ export default function HomePage() {
                       </div>
                     )}
                     <div className="card-rate">⭐ {item.rating.toFixed(1)}</div>
+                    {item.badge && <div className="card-badge">{item.badge}</div>}
                     <div className="card-over">
                       <div className="card-play-circle"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></div>
                       <div className="card-over-title">{item.title}</div>
@@ -491,6 +634,7 @@ export default function HomePage() {
                       </div>
                     )}
                     <div className="card-rate">⭐ {item.rating.toFixed(1)}</div>
+                    {item.badge && <div className="card-badge">{item.badge}</div>}
                     <div className="card-over">
                       <div className="card-play-circle"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></div>
                       <div className="card-over-title">{item.title}</div>
@@ -515,6 +659,7 @@ export default function HomePage() {
                       </div>
                     )}
                     <div className="card-rate">⭐ {item.rating.toFixed(1)}</div>
+                    {item.badge && <div className="card-badge">{item.badge}</div>}
                     <div className="card-over">
                       <div className="card-play-circle"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></div>
                       <div className="card-over-title">{item.title}</div>
@@ -539,6 +684,7 @@ export default function HomePage() {
                       </div>
                     )}
                     <div className="card-rate">⭐ {item.rating.toFixed(1)}</div>
+                    {item.badge && <div className="card-badge">{item.badge}</div>}
                     <div className="card-over">
                       <div className="card-play-circle"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></div>
                       <div className="card-over-title">{item.title}</div>
@@ -580,6 +726,7 @@ export default function HomePage() {
               src={embedUrl}
               allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
               allowFullScreen
+              sandbox="allow-scripts allow-same-origin allow-forms"
               onLoad={() => setLoading(false)}
               style={{ border: 'none' }}
             />
@@ -694,6 +841,7 @@ export default function HomePage() {
                     </div>
                   )}
                   <div className="card-rate">⭐ {item.rating.toFixed(1)}</div>
+                    {item.badge && <div className="card-badge">{item.badge}</div>}
                   <div className="card-over">
                     <div className="card-play-circle"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></div>
                     <div className="card-over-title">{item.title}</div>
@@ -728,6 +876,7 @@ export default function HomePage() {
                         </div>
                       )}
                       <div className="card-rate">⭐ {item.rating.toFixed(1)}</div>
+                    {item.badge && <div className="card-badge">{item.badge}</div>}
                       <div className="card-over">
                         <div className="card-play-circle"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></div>
                         <div className="card-over-title">{item.title}</div>
@@ -900,6 +1049,7 @@ export default function HomePage() {
                       </div>
                     )}
                     <div className="card-rate">⭐ {item.rating.toFixed(1)}</div>
+                    {item.badge && <div className="card-badge">{item.badge}</div>}
                     <div className="card-over">
                       <div className="card-play-circle"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></div>
                       <div className="card-over-title">{item.title}</div>

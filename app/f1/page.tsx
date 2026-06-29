@@ -120,6 +120,7 @@ export default function F1Page() {
             title={selectedReplay ? `${selectedReplay.grandPrix} · ${selectedReplay.session}` : 'Sky Sports F1'}
             loading="lazy"
             referrerPolicy="no-referrer"
+            sandbox="allow-scripts allow-same-origin allow-forms"
           />
           </div>
           <div className="video-controls">

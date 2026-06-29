@@ -16,6 +16,7 @@ export interface ContentItem {
   progress?: number   // for Continue Watching (0-100)
   episode?: string
   type: 'movie' | 'series' | 'anime' | 'sport'
+  releaseDate?: string // ISO date string e.g. "2026-08-15"
 }
 
 export interface SportEvent {

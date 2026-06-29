@@ -26,18 +26,24 @@ const FALLBACK_IMG = `data:image/svg+xml;utf8,${encodeURIComponent(
   </svg>`
 )}`
 
+function formatReleaseDate(date: string): string {
+  const d = new Date(date)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
 export default function ContentCard({ item, size = 'md', showProgress, rank }: Props) {
   const router = useRouter()
   const isWide = size === 'wide'
   const w = WIDTHS[size]
   const aspect = isWide ? '16/9' : '2/3'
-  const imgW = isWide ? 400 : 200
-  const imgH = isWide ? 225 : 300
   const imgSrc = (isWide ? item.backdrop || item.poster : item.poster || item.backdrop) || FALLBACK_IMG
   const typeParam = item.type === 'series' ? 'tv' : item.type
 
+  const isUpcoming = item.releaseDate ? new Date(item.releaseDate) > new Date() : false
+
   const goToWatch = () => {
     if (item.type === 'sport') return
+    if (isUpcoming) return // Don't navigate for unreleased content
     router.push(`/watch/${item.id}?type=${typeParam}`)
   }
 
@@ -48,7 +54,7 @@ export default function ContentCard({ item, size = 'md', showProgress, rank }: P
 
   return (
     <div
-      style={{ flexShrink: 0, width: w, borderRadius: 10, overflow: 'hidden', cursor: 'pointer', position: 'relative', transition: 'transform .25s, box-shadow .25s' }}
+      style={{ flexShrink: 0, width: w, borderRadius: 10, overflow: 'hidden', cursor: isUpcoming ? 'default' : 'pointer', position: 'relative', transition: 'transform .25s, box-shadow .25s' }}
       onClick={goToWatch}
       onMouseEnter={e => {
         const el = e.currentTarget
@@ -82,6 +88,7 @@ export default function ContentCard({ item, size = 'md', showProgress, rank }: P
         style={{
           width: '100%', aspectRatio: aspect, objectFit: 'cover',
           display: 'block', background: '#1a1a2e', position: 'relative', zIndex: 1,
+          ...(isUpcoming ? { filter: 'brightness(0.6)' } : {}),
         }}
       />
 
@@ -103,21 +110,37 @@ export default function ContentCard({ item, size = 'md', showProgress, rank }: P
         opacity: 0, transition: 'opacity .25s',
         display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 14,
       }}>
-        <button
-        onClick={e => { e.stopPropagation(); goToWatch() }}
-        style={{
-          width: 40, height: 40, borderRadius: '50%',
-          background: 'rgba(229,9,20,.9)', border: 'none',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', marginBottom: 8,
-          color: '#fff', fontSize: 16,
-        }}>▶</button>
-        <div style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {item.title}
-        </div>
-        <div style={{ fontSize: 11, color: 'var(--muted)', display: 'flex', gap: 6, alignItems: 'center', marginTop: 3 }}>
-          <span style={{ color: 'var(--gold)' }}>★</span> {item.rating} · {item.year}
-        </div>
+        {isUpcoming ? (
+          <>
+            <div style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {item.title}
+            </div>
+            <div style={{ fontSize: 11, color: '#7cb3ff', marginTop: 4 }}>
+              📅 {item.releaseDate ? formatReleaseDate(item.releaseDate) : 'TBA'}
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>
+              Not available yet
+            </div>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={e => { e.stopPropagation(); goToWatch() }}
+              style={{
+                width: 40, height: 40, borderRadius: '50%',
+                background: 'rgba(229,9,20,.9)', border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', marginBottom: 8,
+                color: '#fff', fontSize: 16,
+              }}>▶</button>
+            <div style={{ fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {item.title}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--muted)', display: 'flex', gap: 6, alignItems: 'center', marginTop: 3 }}>
+              <span style={{ color: 'var(--gold)' }}>★</span> {item.rating} · {item.year}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Progress bar (continue watching) */}
