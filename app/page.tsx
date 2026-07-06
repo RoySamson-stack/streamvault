@@ -16,6 +16,8 @@ interface WatchHistoryItem {
   type: 'movie' | 'tv'
   progress: number
   lastWatched: string
+  season?: number
+  episode?: number
 }
 
 interface Movie {
@@ -276,6 +278,19 @@ export default function HomePage() {
 
   const updateWatchHistory = (item: ContentItem, progress: number) => {
     const newHistory = watchHistory.filter(h => h.id !== item.id)
+    // Check if there's saved season/episode progress
+    let season: number | undefined
+    let episode: number | undefined
+    if (item.type === 'tv') {
+      try {
+        const saved = localStorage.getItem(`vaultsphere_progress_${item.id}`)
+        if (saved) {
+          const p = JSON.parse(saved)
+          season = p.season
+          episode = p.episode
+        }
+      } catch {}
+    }
     newHistory.unshift({
       id: item.id,
       title: item.title,
@@ -283,6 +298,8 @@ export default function HomePage() {
       type: item.type,
       progress,
       lastWatched: new Date().toISOString(),
+      season,
+      episode,
     })
     const trimmed = newHistory.slice(0, 10)
     setWatchHistory(trimmed)
@@ -454,7 +471,19 @@ export default function HomePage() {
       return
     }
     updateWatchHistory(item, 0)
-    window.location.href = `/watch/${item.id}?type=${item.type}`
+    // Build URL with saved season/episode for TV shows
+    let url = `/watch/${item.id}?type=${item.type}`
+    if (item.type === 'tv') {
+      try {
+        const saved = localStorage.getItem(`vaultsphere_progress_${item.id}`)
+        if (saved) {
+          const p = JSON.parse(saved)
+          if (p.season >= 1) url += `&s=${p.season}`
+          if (p.episode >= 1) url += `&e=${p.episode}`
+        }
+      } catch {}
+    }
+    window.location.href = url
   }
 
   const showToast = (msg: string, type = '') => {
@@ -562,7 +591,12 @@ export default function HomePage() {
                         <div className="wcard-play"><div className="wcard-play-inner"><svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg></div></div>
                       </div>
                       <div className="pbar"><div className="pfill" style={{ width: `${item.progress}%` }}></div></div>
-                      <div className="wcard-body"><div className="wcard-title">{item.title}</div><div className="wcard-sub">{item.progress}% watched</div></div>
+                      <div className="wcard-body">
+                        <div className="wcard-title">{item.title}</div>
+                        <div className="wcard-sub">
+                          {item.type === 'tv' && item.season ? `S${item.season} E${item.episode}` : `${item.progress}% watched`}
+                        </div>
+                      </div>
                     </div>
                   )
                 })}

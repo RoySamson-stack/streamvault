@@ -95,15 +95,49 @@ export default function WatchPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true)
   const [videoLoaded, setVideoLoaded] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
+  const [captionsOn, setCaptionsOn] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('vaultsphere_captions') !== 'off'
+    }
+    return true
+  })
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const switchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const loadedRef = useRef(false)
 
+  // Persist captions preference
+  useEffect(() => {
+    localStorage.setItem('vaultsphere_captions', captionsOn ? 'on' : 'off')
+  }, [captionsOn])
+
   const searchParamsString = searchParams.toString()
   const parsedSeason = Number.isFinite(Number(season)) && Number(season) >= 1 ? Number(season) : 1
   const parsedEpisode = Number.isFinite(Number(episode)) && Number(episode) >= 1 ? Number(episode) : 1
-  const [selectedSeason, setSelectedSeason] = useState(parsedSeason)
-  const [selectedEpisode, setSelectedEpisode] = useState(parsedEpisode)
+
+  // Restore last watched season/episode if not specified in URL
+  const getInitialSeason = () => {
+    if (season) return parsedSeason
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`vaultsphere_progress_${params.id}`)
+      if (saved) {
+        try { const p = JSON.parse(saved); if (p.season >= 1) return p.season } catch {}
+      }
+    }
+    return 1
+  }
+  const getInitialEpisode = () => {
+    if (episode) return parsedEpisode
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`vaultsphere_progress_${params.id}`)
+      if (saved) {
+        try { const p = JSON.parse(saved); if (p.episode >= 1) return p.episode } catch {}
+      }
+    }
+    return 1
+  }
+
+  const [selectedSeason, setSelectedSeason] = useState(getInitialSeason)
+  const [selectedEpisode, setSelectedEpisode] = useState(getInitialEpisode)
   const [seasonList, setSeasonList] = useState<SeasonSummary[]>([])
   const [seasonDetail, setSeasonDetail] = useState<SeasonDetail | null>(null)
   const [seasonsLoading, setSeasonsLoading] = useState(false)
@@ -119,6 +153,15 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     nextParams.set('s', String(seasonNumber))
     nextParams.set('e', String(episodeNumber))
     router.replace(`/watch/${params.id}?${nextParams.toString()}`, { scroll: false })
+    // Save progress to localStorage
+    try {
+      localStorage.setItem(`vaultsphere_progress_${params.id}`, JSON.stringify({
+        season: seasonNumber,
+        episode: episodeNumber,
+        type,
+        updatedAt: Date.now(),
+      }))
+    } catch {}
   }, [isTV, router, searchParamsString, type, params.id])
 
   const handleSeasonSelect = useCallback((seasonNumber: number) => {
@@ -135,12 +178,16 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     if (!hasStarted) setHasStarted(true)
   }, [isTV, selectedEpisode, selectedSeason, updateQueryParams, hasStarted])
 
-  const embedUrl = providers[currentProvider].build(
+  const rawEmbedUrl = providers[currentProvider].build(
     type,
     params.id,
     isTV ? String(selectedSeason) : undefined,
     isTV ? String(selectedEpisode) : undefined,
   )
+  // Append captions parameter if supported
+  const embedUrl = captionsOn
+    ? rawEmbedUrl + (rawEmbedUrl.includes('?') ? '&sub=english' : '?sub=english')
+    : rawEmbedUrl
 
   useEffect(() => {
     if (!isTV) return
@@ -314,6 +361,17 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     loadedRef.current = false
     setVideoLoaded(false)
     setHasStarted(true)
+    // Save current position on play start
+    if (isTV) {
+      try {
+        localStorage.setItem(`vaultsphere_progress_${params.id}`, JSON.stringify({
+          season: selectedSeason,
+          episode: selectedEpisode,
+          type,
+          updatedAt: Date.now(),
+        }))
+      } catch {}
+    }
   }
 
   return (
@@ -385,6 +443,15 @@ export default function WatchPage({ params }: { params: { id: string } }) {
               referrerPolicy="no-referrer"
               onLoad={handleIframeLoad}
             />
+            <div className="player-controls-overlay">
+              <button
+                className={`player-cc-btn ${captionsOn ? 'active' : ''}`}
+                onClick={() => setCaptionsOn(prev => !prev)}
+                title={captionsOn ? 'Subtitles On' : 'Subtitles Off'}
+              >
+                CC
+              </button>
+            </div>
           </>
         )}
       </div>
