@@ -95,20 +95,9 @@ export default function WatchPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true)
   const [videoLoaded, setVideoLoaded] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
-  const [captionsOn, setCaptionsOn] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('vaultsphere_captions') !== 'off'
-    }
-    return true
-  })
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const switchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const loadedRef = useRef(false)
-
-  // Persist captions preference
-  useEffect(() => {
-    localStorage.setItem('vaultsphere_captions', captionsOn ? 'on' : 'off')
-  }, [captionsOn])
 
   const searchParamsString = searchParams.toString()
   const parsedSeason = Number.isFinite(Number(season)) && Number(season) >= 1 ? Number(season) : 1
@@ -178,16 +167,12 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     if (!hasStarted) setHasStarted(true)
   }, [isTV, selectedEpisode, selectedSeason, updateQueryParams, hasStarted])
 
-  const rawEmbedUrl = providers[currentProvider].build(
+  const embedUrl = providers[currentProvider].build(
     type,
     params.id,
     isTV ? String(selectedSeason) : undefined,
     isTV ? String(selectedEpisode) : undefined,
   )
-  // Append captions parameter if supported
-  const embedUrl = captionsOn
-    ? rawEmbedUrl + (rawEmbedUrl.includes('?') ? '&sub=english' : '?sub=english')
-    : rawEmbedUrl
 
   useEffect(() => {
     if (!isTV) return
@@ -443,15 +428,6 @@ export default function WatchPage({ params }: { params: { id: string } }) {
               referrerPolicy="no-referrer"
               onLoad={handleIframeLoad}
             />
-            <div className="player-controls-overlay">
-              <button
-                className={`player-cc-btn ${captionsOn ? 'active' : ''}`}
-                onClick={() => setCaptionsOn(prev => !prev)}
-                title={captionsOn ? 'Subtitles On' : 'Subtitles Off'}
-              >
-                CC
-              </button>
-            </div>
           </>
         )}
       </div>
