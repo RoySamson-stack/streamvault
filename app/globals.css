@@ -145,6 +145,14 @@ img { display: block; }
 }
 .nav-icon-btn:hover { color: var(--text); background: rgba(255,255,255,0.06); }
 .nav-icon-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.nav-apk-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(61,220,132,0.12); border: 1px solid rgba(61,220,132,0.3);
+  color: #3ddc84; cursor: pointer; transition: all 0.2s;
+  text-decoration: none;
+}
+.nav-apk-btn:hover { background: rgba(61,220,132,0.2); transform: scale(1.1); }
 .notif-dot {
   position: absolute;
   top: 6px;
@@ -807,6 +815,13 @@ img { display: block; }
   box-shadow: 0 2px 8px rgba(61,220,132,0.3);
 }
 .ft-apk-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(61,220,132,0.4); }
+.ft-download-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; margin-bottom: 32px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface);
+}
+.ft-download-title { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); }
 .ft-disclaimer { font-size: 11px; color: var(--muted); max-width: 560px; line-height: 1.6; }
 .ft-copy { font-size: 11px; color: var(--muted); }
 .ft-copy span { color: var(--accent); }
