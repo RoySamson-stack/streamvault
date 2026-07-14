@@ -102,13 +102,13 @@ img { display: block; }
   background: #1c1c1c;
   border: 1px solid var(--border);
   color: var(--text);
-  margin-left: 12px;
   cursor: pointer;
   align-items: center;
   justify-content: center;
   flex-direction: column;
   gap: 4px;
   padding: 4px;
+  order: -1;
 }
 .mobile-nav-toggle span {
   display: block;
@@ -869,7 +869,8 @@ img { display: block; }
 
 /* ════ RESPONSIVE ════ */
 @media (max-width: 960px) {
-  #nav { padding: 0 20px; position: relative; z-index: 12; }
+  #nav { padding: 0 16px; position: relative; z-index: 12; }
+  .logo { position: absolute; left: 50%; transform: translateX(-50%); font-size: 22px; }
   .nav-center { 
     display: none;
     position: absolute;
@@ -891,6 +892,8 @@ img { display: block; }
   .mobile-nav-toggle {
     display: flex;
   }
+  .nav-right { margin-left: auto; gap: 6px; }
+  .nav-apk-btn { display: none; }
   .mobile-nav-backdrop {
     position: fixed;
     inset: 0;

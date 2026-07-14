@@ -102,15 +102,6 @@ export default function TopNav({ active, onNavigate, onMarkAllRead, notification
   return (
     <>
       <nav id="nav" className={navScrolled ? 'scrolled' : 'solid'}>
-        <div
-          className="logo focusable"
-          role="button"
-          tabIndex={0}
-          onClick={() => handleNavigate('home')}
-          onKeyDown={onEnter(() => handleNavigate('home'))}
-        >
-          VAULT<span>SPHERE</span>
-        </div>
         <button
           className="mobile-nav-toggle"
           aria-expanded={mobileNavOpen}
@@ -121,6 +112,15 @@ export default function TopNav({ active, onNavigate, onMarkAllRead, notification
           <span></span>
           <span></span>
         </button>
+        <div
+          className="logo focusable"
+          role="button"
+          tabIndex={0}
+          onClick={() => handleNavigate('home')}
+          onKeyDown={onEnter(() => handleNavigate('home'))}
+        >
+          VAULT<span>SPHERE</span>
+        </div>
         <div className={`nav-center ${mobileNavOpen ? 'open' : ''}`}>
           {navLinks.map(link => (
             <span

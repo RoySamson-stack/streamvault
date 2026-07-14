@@ -7,6 +7,17 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
+  async headers() {
+    return [
+      {
+        source: '/VaultSphere.apk',
+        headers: [
+          { key: 'Content-Type', value: 'application/vnd.android.package-archive' },
+          { key: 'Content-Disposition', value: 'attachment; filename="VaultSphere.apk"' },
+        ],
+      },
+    ]
+  },
 }
 
 module.exports = nextConfig
