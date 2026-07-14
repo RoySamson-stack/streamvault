@@ -798,6 +798,15 @@ img { display: block; }
 .ft-col a { display: block; font-size: 13px; color: rgba(240,242,245,0.5); margin-bottom: 9px; cursor: pointer; transition: color var(--trans); }
 .ft-col a:hover { color: var(--accent); }
 .ft-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 20px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
+.ft-apk-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: 8px;
+  background: linear-gradient(135deg, #3ddc84, #1b9e5a);
+  color: #fff; font-size: 13px; font-weight: 700;
+  text-decoration: none; transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(61,220,132,0.3);
+}
+.ft-apk-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(61,220,132,0.4); }
 .ft-disclaimer { font-size: 11px; color: var(--muted); max-width: 560px; line-height: 1.6; }
 .ft-copy { font-size: 11px; color: var(--muted); }
 .ft-copy span { color: var(--accent); }

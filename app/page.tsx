@@ -743,6 +743,14 @@ export default function HomePage() {
             </div>
           </div>
           <div className="ft-bottom">
+            <a
+              href="/VaultSphere.apk"
+              download
+              className="ft-apk-btn"
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17.523 2H6.477A4.477 4.477 0 0 0 2 6.477v11.046A4.477 4.477 0 0 0 6.477 22h11.046A4.477 4.477 0 0 0 22 17.523V6.477A4.477 4.477 0 0 0 17.523 2zM12 17.5l-5-5h3V6h4v6.5h3l-5 5z"/></svg>
+              Get Android App
+            </a>
             <p className="ft-disclaimer">DISCLAIMER: Content is indexed from public sources. Contact hosting sites for removal requests.</p>
             <span className="ft-copy">VaultSphere <span>v1.0</span> · © 2026</span>
           </div>
