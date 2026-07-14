@@ -40,3 +40,4 @@ __pycache__/
 *.pyc
 .env
 brave-rewards-verification.txt
+last_session.txt

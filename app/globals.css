@@ -1072,7 +1072,8 @@ img { display: block; }
 .episode-list { display: flex; flex-direction: column; gap: 10px; }
 .episode-card { width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px 14px; background: rgba(255,255,255,0.02); color: #fff; text-align: left; cursor: pointer; transition: border 0.2s, background 0.2s, transform 0.15s; }
 .episode-card:hover { border-color: rgba(232,201,109,0.5); transform: translateY(-1px); }
-.episode-card.active { border-color: #e8c96d; background: rgba(232,201,109,0.15); }
+.episode-card.active { border-color: #e8c96d; background: rgba(232,201,109,0.15); box-shadow: 0 0 0 1px rgba(232,201,109,0.3); }
+.episode-card.active::before { content: '▶ '; color: #e8c96d; font-size: 10px; }
 .episode-title { font-size: 14px; font-weight: 600; }
 .episode-meta { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 4px; }
 

@@ -80,6 +80,12 @@ export default function WatchPage({ params }: { params: { id: string } }) {
   const [movie, setMovie] = useState<ContentItem | null>(null)
   const [currentProvider, setCurrentProvider] = useState(() => {
     if (typeof window !== 'undefined') {
+      // Check per-title preference first, then global preference
+      const perTitle = localStorage.getItem(`vaultsphere_provider_${params.id}`)
+      if (perTitle) {
+        const idx = providers.findIndex(p => p.name === perTitle)
+        if (idx !== -1) return idx
+      }
       const saved = localStorage.getItem('vaultsphere_fastest_provider')
       if (saved) {
         const idx = providers.findIndex(p => p.name === saved)
@@ -90,14 +96,17 @@ export default function WatchPage({ params }: { params: { id: string } }) {
   })
 
   const saveProviderPreference = (i: number) => {
-    try { localStorage.setItem('vaultsphere_fastest_provider', providers[i].name) } catch {}
+    try {
+      localStorage.setItem('vaultsphere_fastest_provider', providers[i].name)
+      localStorage.setItem(`vaultsphere_provider_${params.id}`, providers[i].name)
+    } catch {}
   }
   const [loading, setLoading] = useState(true)
   const [videoLoaded, setVideoLoaded] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const switchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const loadedRef = useRef(false)
+  const playerRef = useRef<HTMLDivElement>(null)
 
   const searchParamsString = searchParams.toString()
   const parsedSeason = Number.isFinite(Number(season)) && Number(season) >= 1 ? Number(season) : 1
@@ -165,6 +174,10 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     setSelectedEpisode(episodeNumber)
     updateQueryParams(selectedSeason, episodeNumber)
     if (!hasStarted) setHasStarted(true)
+    // Auto-scroll to player
+    setTimeout(() => {
+      playerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 100)
   }, [isTV, selectedEpisode, selectedSeason, updateQueryParams, hasStarted])
 
   const embedUrl = providers[currentProvider].build(
@@ -226,31 +239,12 @@ export default function WatchPage({ params }: { params: { id: string } }) {
     loadedRef.current = true
     setLoading(false)
     setVideoLoaded(true)
-    if (switchTimeoutRef.current) {
-      clearTimeout(switchTimeoutRef.current)
-      switchTimeoutRef.current = null
-    }
   }
 
   useEffect(() => {
     if (videoLoaded) return
-
     loadedRef.current = false
     setLoading(true)
-    
-    if (switchTimeoutRef.current) clearTimeout(switchTimeoutRef.current)
-    
-    switchTimeoutRef.current = setTimeout(() => {
-      if (!videoLoaded && currentProvider < providers.length - 1) {
-        setCurrentProvider(prev => prev + 1)
-      }
-    }, 10000)
-
-    return () => {
-      if (switchTimeoutRef.current) {
-        clearTimeout(switchTimeoutRef.current)
-      }
-    }
   }, [currentProvider, params.id, videoLoaded])
 
   useEffect(() => {
@@ -368,7 +362,7 @@ export default function WatchPage({ params }: { params: { id: string } }) {
         </span>
       </div>
 
-      <div className="player-container">
+      <div className="player-container" ref={playerRef}>
         <div
           className="player-backdrop"
           style={movie?.backdrop ? { backgroundImage: `url(${movie.backdrop})` } : undefined}
@@ -498,6 +492,7 @@ export default function WatchPage({ params }: { params: { id: string } }) {
                     key={ep.id ?? `${selectedSeason}-${ep.episode_number}`}
                     type="button"
                     className={`episode-card ${ep.episode_number === selectedEpisode ? 'active' : ''}`}
+                    ref={ep.episode_number === selectedEpisode ? (el) => { if (el) el.scrollIntoView({ block: 'nearest' }) } : undefined}
                     onClick={() => handleEpisodeSelect(ep.episode_number)}
                   >
                     <div>
