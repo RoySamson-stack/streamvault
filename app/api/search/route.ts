@@ -3,8 +3,22 @@ import { NextResponse } from 'next/server'
 const KEY = process.env.NEXT_PUBLIC_TMDB_KEY
 const BASE = process.env.NEXT_PUBLIC_TMDB_BASE || 'https://api.themoviedb.org/3'
 const IMG = process.env.NEXT_PUBLIC_TMDB_IMG || 'https://image.tmdb.org/t/p'
+const TIMEOUT_MS = 20_000
 
 const withImg = (path: string | null, size = 'w185') => (path ? `${IMG}/${size}${path}` : null)
+
+async function fetchWithTimeout(url: string, timeoutMs = TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, { signal: controller.signal, cache: 'no-store' })
+    clearTimeout(timer)
+    return res
+  } catch (err) {
+    clearTimeout(timer)
+    throw err
+  }
+}
 
 export async function GET(request: Request) {
   if (!KEY) {
@@ -14,23 +28,28 @@ export async function GET(request: Request) {
   const q = searchParams.get('q')?.trim()
   if (!q) return NextResponse.json({ results: [] })
 
-  const url = `${BASE}/search/multi?language=en-US&page=1&query=${encodeURIComponent(q)}&api_key=${KEY}`
-  const res = await fetch(url, { cache: 'no-store' })
-  if (!res.ok) {
-    return NextResponse.json({ results: [] }, { status: res.status })
+  try {
+    const url = `${BASE}/search/multi?language=en-US&page=1&query=${encodeURIComponent(q)}&api_key=${KEY}`
+    const res = await fetchWithTimeout(url)
+    if (!res.ok) {
+      return NextResponse.json({ results: [] }, { status: res.status })
+    }
+
+    const data = await res.json()
+    const results = (data?.results || [])
+      .filter((r: any) => r.media_type === 'movie' || r.media_type === 'tv')
+      .map((r: any) => ({
+        id: r.id,
+        title: r.title || r.name || '',
+        year: r.release_date ? parseInt(String(r.release_date).split('-')[0]) : (r.first_air_date ? parseInt(String(r.first_air_date).split('-')[0]) : undefined),
+        media_type: r.media_type,
+        poster: withImg(r.poster_path),
+        rating: r.vote_average || 0,
+      }))
+
+    return NextResponse.json({ results })
+  } catch (err) {
+    console.error('Search TMDB error:', err)
+    return NextResponse.json({ results: [], error: 'Search temporarily unavailable' }, { status: 200 })
   }
-
-  const data = await res.json()
-  const results = (data?.results || [])
-    .filter((r: any) => r.media_type === 'movie' || r.media_type === 'tv')
-    .map((r: any) => ({
-      id: r.id,
-      title: r.title || r.name || '',
-      year: r.release_date ? parseInt(String(r.release_date).split('-')[0]) : (r.first_air_date ? parseInt(String(r.first_air_date).split('-')[0]) : undefined),
-      media_type: r.media_type,
-      poster: withImg(r.poster_path),
-      rating: r.vote_average || 0,
-    }))
-
-  return NextResponse.json({ results })
 }

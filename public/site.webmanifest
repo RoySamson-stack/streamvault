@@ -1,0 +1,21 @@
+{
+  "name": "VaultSphere",
+  "short_name": "VaultSphere",
+  "description": "Watch movies, TV series, anime, and live sports — your free entertainment hub.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#07090d",
+  "theme_color": "#e8c96d",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

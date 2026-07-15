@@ -2,7 +2,7 @@
 import type { Metadata } from 'next'
 import TopNav from '../components/TopNav'
 
-export const metadata: Metadata = { title: 'StreamVault — Sign In' }
+export const metadata: Metadata = { title: 'Sign In', description: 'Sign in to your VaultSphere account to access your watchlist and continue watching.' }
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (

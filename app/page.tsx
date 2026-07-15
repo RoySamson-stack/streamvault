@@ -507,8 +507,14 @@ export default function HomePage() {
   return (
     <>
       <section className="seo-blurb">
-        <h1>Watch movies, TV series, anime, and live sports in one place</h1>
-        <p>VaultSphere helps you discover trending titles, popular series, and today’s sports schedule fast.</p>
+        <h1>VaultSphere — Free Movies, TV Series, Anime &amp; Live Sports Streaming</h1>
+        <p>VaultSphere is the ultimate free streaming discovery platform where you can watch trending movies, popular TV series, binge-worthy anime, and live sports including F1, NBA, NFL, EPL, and more. Explore thousands of titles across Action, Comedy, Drama, Horror, Sci-Fi, and Animation genres. Search for any movie or show, switch streaming sources, and pick up where you left off. VaultSphere — your gateway to unlimited entertainment, all in one place.</p>
+        <h2>Watch Free Movies Online</h2>
+        <p>Discover trending movies and top-rated films from Hollywood and beyond. VaultSphere aggregates streaming sources so you can watch movies online for free without signing up.</p>
+        <h2>Stream TV Series and Anime</h2>
+        <p>Binge-watch popular TV shows and anime series including seasonal releases. Track your watch progress across episodes with automatic season and episode saving.</p>
+        <h2>Live Sports &amp; F1 Streaming</h2>
+        <p>Follow live sports events across major leagues including F1 races, NBA, NFL, MLB, NHL, UFC, and EPL football. View today&#39;s sports schedule and watch live streams with multi-source fallback.</p>
       </section>
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
 
@@ -632,7 +638,7 @@ export default function HomePage() {
           )}
 
           <div className="row-wrap">
-            <div className="row-head"><span className="row-label">Trending <em>Now</em></span><span className="row-all focusable" role="button" tabIndex={0}>See all</span></div>
+            <div className="row-head"><span className="row-label">Trending <em>Now</em></span><span className="row-all focusable" role="button" tabIndex={0} onClick={() => router.push('/browse')} onKeyDown={onEnter(() => router.push('/browse'))}>See all</span></div>
             <div className="cards-scroll">
               {trending.slice(0, 10).map((item) => (
                 <div key={item.id} className="card focusable" role="button" tabIndex={0} onClick={() => handleWatch(item)} onKeyDown={onEnter(() => handleWatch(item))}>
@@ -682,7 +688,7 @@ export default function HomePage() {
           </div>
 
           <div className="row-wrap">
-            <div className="row-head"><span className="row-label">Top <em>Rated</em></span><span className="row-all focusable" role="button" tabIndex={0}>See all</span></div>
+            <div className="row-head"><span className="row-label">Top <em>Rated</em></span><span className="row-all focusable" role="button" tabIndex={0} onClick={() => router.push('/browse')} onKeyDown={onEnter(() => router.push('/browse'))}>See all</span></div>
             <div className="cards-scroll">
               {topRated.slice(0, 8).map((item) => (
                 <div key={item.id} className="card focusable" role="button" tabIndex={0} onClick={() => handleWatch(item)} onKeyDown={onEnter(() => handleWatch(item))}>
@@ -707,7 +713,7 @@ export default function HomePage() {
           </div>
 
           <div className="row-wrap">
-            <div className="row-head"><span className="row-label">Animation</span><span className="row-all focusable" role="button" tabIndex={0}>See all</span></div>
+            <div className="row-head"><span className="row-label">Animation</span><span className="row-all focusable" role="button" tabIndex={0} onClick={() => router.push('/browse?genre=Animation')} onKeyDown={onEnter(() => router.push('/browse?genre=Animation'))}>See all</span></div>
             <div className="cards-scroll">
               {anime.slice(0, 8).map((item) => (
                 <div key={item.id} className="card focusable" role="button" tabIndex={0} onClick={() => handleWatch(item)} onKeyDown={onEnter(() => handleWatch(item))}>

@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { poster, backdrop, getGenreNames } from '@/lib/tmdb'
 import TopNav from '../components/TopNav'
 
@@ -39,10 +39,12 @@ interface ContentItem {
   description: string
 }
 
-export default function BrowsePage() {
+function BrowseContent() {
+  const searchParams = useSearchParams()
+  const genreParam = searchParams.get('genre')
   const [popular, setPopular] = useState<ContentItem[]>([])
   const [popularTV, setPopularTV] = useState<ContentItem[]>([])
-  const [selectedFilter, setSelectedFilter] = useState('All')
+  const [selectedFilter, setSelectedFilter] = useState(genreParam || 'All')
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -114,7 +116,7 @@ export default function BrowsePage() {
 
       <div className="filter-bar">
         {['All', 'Movies', 'TV Shows', 'Action', 'Drama', 'Comedy', 'Horror', 'Sci-Fi', 'Animation'].map(f => (
-          <button key={f} className={`filter-chip ${selectedFilter === f ? 'active' : ''}`} onClick={() => setSelectedFilter(f)}>{f}</button>
+          <button key={f} className={`filter-chip ${selectedFilter === f ? 'active' : ''}`} onClick={() => { setSelectedFilter(f); router.replace(f === 'All' ? '/browse' : `/browse?genre=${f}`, { scroll: false }) }}>{f}</button>
         ))}
       </div>
 
@@ -163,16 +165,29 @@ export default function BrowsePage() {
             <div className="sports-badge">Official</div>
             <div className="sports-title">On‑Site Embeds</div>
             <div className="sports-sub">We only embed official streams that allow iframe</div>
-            <div className="sports-link">Go to Sports Hub →</div>
-          </div>
+          <div className="sports-link">Go to Sports Hub →</div>
         </div>
-      </section>
+      </div>
+    </section>
     </>
   )
 }
-  const onEnter = (action: () => void) => (e: React.KeyboardEvent<HTMLElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      action()
-    }
+
+function LoadingFallback() {
+  return <div className="browse-hero"><h1>Browse <span>Everything</span></h1><p>Loading...</p></div>
+}
+
+export default function BrowsePage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <BrowseContent />
+    </Suspense>
+  )
+}
+
+const onEnter = (action: () => void) => (e: React.KeyboardEvent<HTMLElement>) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault()
+    action()
   }
+}

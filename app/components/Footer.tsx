@@ -6,7 +6,7 @@ export default function Footer() {
       <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, letterSpacing: 3, marginBottom: 6,
         background: 'linear-gradient(135deg,#e50914,#ff6b35)',
         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-      }}>StreamVault</div>
+      }}>VaultSphere</div>
       <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 32 }}>
         Your universe of entertainment, all in one place.
       </p>
@@ -40,7 +40,7 @@ export default function Footer() {
         paddingTop: 20, borderTop: '1px solid rgba(255,255,255,.06)',
         fontSize: 12, color: 'var(--muted)',
       }}>
-        <span>© 2025 StreamVault, Inc. All rights reserved.</span>
+        <span>© 2026 VaultSphere, Inc. All rights reserved.</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <a
             href="/VaultSphere.apk"

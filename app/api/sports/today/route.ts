@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 const SPORTSDB_KEY = process.env.NEXT_PUBLIC_SPORTSDB_KEY || '123'
 const BASE = 'https://www.thesportsdb.com/api/v1/json'
+const TIMEOUT_MS = 25_000
 
 const POPULAR_LEAGUES = [
   // Soccer
@@ -61,7 +62,10 @@ export async function GET(request: Request) {
 
   try {
     const url = `${BASE}/${SPORTSDB_KEY}/eventsday.php?d=${encodeURIComponent(date)}`
-    const res = await fetch(url, { cache: 'no-store' })
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+    const res = await fetch(url, { signal: controller.signal, cache: 'no-store' })
+    clearTimeout(timer)
     if (!res.ok) {
       return NextResponse.json({ events: [], error: `SportsDB error: ${res.status}` }, { status: res.status })
     }

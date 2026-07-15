@@ -69,17 +69,16 @@ export default function Navbar() {
         background: 'linear-gradient(135deg,#e50914,#ff6b35)',
         WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
         textDecoration: 'none',
-      }}>StreamVault</Link>
+      }}>VaultSphere</Link>
 
       {/* Links */}
       <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
         {[
           { label: 'Home', href: '/' },
-          { label: 'Movies', href: '#movies' },
-          { label: 'Series', href: '#series' },
-          { label: 'Sports', href: '#sports' },
-          { label: 'Anime', href: '#anime' },
-          { label: 'Live TV', href: '#live' },
+          { label: 'Browse', href: '/browse' },
+          { label: 'Sports', href: '/sports' },
+          { label: 'F1', href: '/f1' },
+          { label: 'Search', href: '/search' },
         ].map(({ label, href }) => (
           <a key={label} href={href} style={{
             color: 'var(--muted)', textDecoration: 'none',

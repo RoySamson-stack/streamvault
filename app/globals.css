@@ -1085,28 +1085,198 @@ img { display: block; }
 .back-link { font-size: 11px; color: #8a9bb5; text-decoration: none; display: inline-block; margin-top: 12px; }
 .back-link:hover { color: #e8c96d; }
 
-.season-panel { padding: 20px 48px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
-.season-column, .episode-column { flex: 1; min-width: 220px; }
-.season-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.season-label-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 600; }
-.season-label-status { font-size: 11px; color: rgba(255,255,255,0.6); }
-.season-helper { font-size: 12px; color: rgba(255,255,255,0.55); margin: 0; }
-.season-list { display: flex; gap: 8px; flex-wrap: wrap; }
-.season-chip { border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; padding: 10px 14px; background: rgba(255,255,255,0.03); color: #fff; font-size: 12px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 4px; min-width: 120px; transition: border 0.2s, background 0.2s; }
-.season-chip small { font-size: 10px; color: rgba(255,255,255,0.65); }
-.season-chip.active { border-color: #e8c96d; background: rgba(232,201,109,0.12); }
-.episode-column { flex: 2; }
-.episode-list { display: flex; flex-direction: column; gap: 10px; }
-.episode-card { width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px 14px; background: rgba(255,255,255,0.02); color: #fff; text-align: left; cursor: pointer; transition: border 0.2s, background 0.2s, transform 0.15s; }
-.episode-card:hover { border-color: rgba(232,201,109,0.5); transform: translateY(-1px); }
-.episode-card.active { border-color: #e8c96d; background: rgba(232,201,109,0.15); box-shadow: 0 0 0 1px rgba(232,201,109,0.3); }
-.episode-card.active::before { content: '▶ '; color: #e8c96d; font-size: 10px; }
-.episode-title { font-size: 14px; font-weight: 600; }
-.episode-meta { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 4px; }
+/* ════ NETFLIX-STYLE NEXT EPISODE BANNER (compact, under player) ════ */
+.nxp-banner {
+  display: flex; align-items: center; gap: 16px;
+  padding: 12px 24px;
+  margin: 0 48px;
+  background: linear-gradient(135deg, rgba(232,201,109,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(232,201,109,0.12);
+  border-radius: 10px;
+  transition: all 0.25s ease;
+}
+.nxp-banner:hover {
+  background: linear-gradient(135deg, rgba(232,201,109,0.10) 0%, rgba(255,255,255,0.04) 100%);
+  border-color: rgba(232,201,109,0.25);
+}
+
+.nxp-banner-thumb {
+  flex-shrink: 0; width: 120px; aspect-ratio: 16/9;
+  border-radius: 6px; overflow: hidden;
+  background: var(--surface2);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+}
+.nxp-banner-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.nxp-banner-thumb-ph {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface3); color: rgba(255,255,255,0.15);
+}
+.nxp-banner-thumb-ph svg { width: 24px; height: 24px; }
+
+.nxp-banner-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.nxp-banner-badge {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  color: #e8c96d; text-transform: uppercase;
+}
+.nxp-banner-title {
+  font-size: 14px; font-weight: 600; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.nxp-banner-meta { font-size: 12px; color: var(--muted); }
+
+.nxp-banner-play {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 22px;
+  border: none; border-radius: 8px;
+  background: #e8c96d; color: #0a0e17;
+  font-size: 13px; font-weight: 700; letter-spacing: 0.3px;
+  cursor: pointer; transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.nxp-banner-play:hover {
+  background: #f0d97a; transform: scale(1.03);
+  box-shadow: 0 4px 20px rgba(232,201,109,0.35);
+}
+.nxp-banner-play:active { transform: scale(0.97); }
 
 @media (max-width: 768px) {
-  .season-panel { flex-direction: column; padding: 16px; gap: 16px; }
-  .season-column, .episode-column { min-width: 100%; }
+  .nxp-banner { margin: 0 16px; padding: 10px 14px; flex-wrap: wrap; gap: 10px; }
+  .nxp-banner-thumb { width: 80px; }
+  .nxp-banner-play { width: 100%; justify-content: center; }
+}
+
+/* ════ NETFLIX-STYLE EPISODE BROWSER ════ */
+.episodes-browser { padding: 24px 48px 40px; border-top: 1px solid rgba(255,255,255,0.06); background: var(--bg); }
+
+.episodes-browser-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.episodes-browser-heading { display: flex; align-items: baseline; gap: 12px; }
+.episodes-browser-heading h2 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 1px; color: var(--text); margin: 0; }
+.episodes-browser-count { font-size: 13px; color: var(--muted2); }
+
+/* Season dropdown — Netflix-style */
+.season-selector { position: relative; }
+.season-selector-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px 8px 12px; border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.06);
+  color: var(--text); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: border-color 0.2s, background 0.2s;
+  min-width: 180px;
+}
+.season-selector-btn:hover { border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.1); }
+.season-selector-btn svg:first-child { opacity: 0.6; }
+.season-selector-chevron { margin-left: auto; opacity: 0.5; transition: transform 0.2s; }
+.season-selector-btn:focus-within .season-selector-chevron { transform: rotate(180deg); }
+
+.season-selector-menu {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+  margin-top: 4px; border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: #1a1a2a; overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  animation: seasonMenuIn 0.15s ease both;
+}
+@keyframes seasonMenuIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+.season-selector-item {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 10px 14px;
+  border: none; background: transparent; color: rgba(255,255,255,0.8);
+  font-size: 13px; cursor: pointer; text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+.season-selector-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.season-selector-item.active { background: rgba(232,201,109,0.12); color: var(--accent); }
+.season-selector-eps { font-size: 11px; color: var(--muted); }
+
+.episodes-browser-status { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px; color: var(--muted2); font-size: 13px; text-align: center; }
+
+.episodes-browser-status .spinner { width: 24px; height: 24px; border-width: 2px; }
+
+/* Episode cards — Netflix vertical list */
+.episodes-list { display: flex; flex-direction: column; gap: 12px; }
+
+.episode-card-netflix {
+  display: flex; gap: 16px; width: 100%;
+  border: none; border-radius: 8px;
+  padding: 10px; background: rgba(255,255,255,0.02);
+  color: var(--text); text-align: left; cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+.episode-card-netflix:hover { background: rgba(255,255,255,0.06); transform: translateX(4px); }
+.episode-card-netflix.active { background: rgba(232,201,109,0.08); box-shadow: inset 3px 0 0 var(--accent); }
+
+.episode-card-thumb {
+  position: relative; flex-shrink: 0;
+  width: 154px; aspect-ratio: 16/9;
+  border-radius: 4px; overflow: hidden;
+  background: var(--surface2);
+}
+.episode-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.episode-card-thumb-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface3); color: rgba(255,255,255,0.15);
+}
+.episode-card-thumb-placeholder svg { width: 28px; height: 28px; }
+
+.episode-card-thumb-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s;
+}
+.episode-card-netflix:hover .episode-card-thumb-overlay { opacity: 1; }
+
+.episode-card-play-btn {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--accent); display: flex;
+  align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px rgba(232,201,109,0.4);
+}
+.episode-card-play-btn svg { width: 18px; height: 18px; color: var(--bg); margin-left: 2px; }
+
+.episode-card-badge {
+  position: absolute; top: 6px; left: 6px; z-index: 2;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
+  padding: 2px 7px; border-radius: 3px;
+  background: var(--accent); color: var(--bg);
+}
+
+.episode-card-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
+
+.episode-card-title-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.episode-card-number {
+  font-size: 13px; font-weight: 700; color: var(--muted);
+  min-width: 24px; font-variant-numeric: tabular-nums;
+}
+.episode-card-netflix.active .episode-card-number { color: var(--accent); }
+.episode-card-title { font-size: 14px; font-weight: 600; }
+.episode-card-runtime {
+  margin-left: auto; font-size: 11px; color: var(--muted2);
+  white-space: nowrap;
+}
+
+.episode-card-desc {
+  font-size: 13px; color: rgba(240,242,245,0.6);
+  line-height: 1.5; margin: 0;
+}
+
+.episode-card-date { font-size: 11px; color: var(--muted); }
+
+@media (max-width: 768px) {
+  .episodes-browser { padding: 16px; }
+  .episode-card-netflix { flex-direction: column; gap: 10px; padding: 8px; }
+  .episode-card-thumb { width: 100%; aspect-ratio: 16/9; }
+  .episodes-browser-header { flex-direction: column; align-items: flex-start; }
+  .season-selector { width: 100%; }
+  .season-selector-btn { width: 100%; }
 }
 
 /* Loading Spinner */

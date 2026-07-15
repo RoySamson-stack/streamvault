@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState, useRef } from 'react'
-import { poster, backdrop } from '@/lib/tmdb'
+import { poster, backdrop, img } from '@/lib/tmdb'
 import TopNav from '../../components/TopNav'
 
 interface ContentItem {
@@ -142,7 +142,10 @@ export default function WatchPage({ params }: { params: { id: string } }) {
   const [seasonDetailLoading, setSeasonDetailLoading] = useState(false)
   const [seasonError, setSeasonError] = useState<string | null>(null)
   const [seasonDetailError, setSeasonDetailError] = useState<string | null>(null)
+  const [seasonDropdownOpen, setSeasonDropdownOpen] = useState(false)
   const isTV = type === 'tv'
+
+  const still = (path: string | null) => img(path, 'w342') ?? undefined
 
   const updateQueryParams = useCallback((seasonNumber: number, episodeNumber: number) => {
     if (!isTV) return
@@ -426,6 +429,59 @@ export default function WatchPage({ params }: { params: { id: string } }) {
         )}
       </div>
 
+      {/* ═══ NETFLIX-STYLE NEXT EPISODE BANNER — right under the player ═══ */}
+      {isTV && seasonDetail && (() => {
+        const idx = seasonDetail.episodes.findIndex(ep => ep.episode_number === selectedEpisode)
+        const hasNext = idx >= 0 && idx < seasonDetail.episodes.length - 1
+        const nextEp = hasNext ? seasonDetail.episodes[idx + 1] : null
+        const hasNextSeason = idx === seasonDetail.episodes.length - 1 &&
+          seasonList.some(s => s.season_number === selectedSeason + 1)
+
+        if (!hasNext && !hasNextSeason) return null
+
+        const playNext = () => {
+          if (nextEp) {
+            handleEpisodeSelect(nextEp.episode_number)
+          } else if (hasNextSeason) {
+            handleSeasonSelect(selectedSeason + 1)
+            setSelectedEpisode(1)
+          }
+          loadedRef.current = false
+          setVideoLoaded(false)
+          setHasStarted(true)
+          setLoading(true)
+          setTimeout(() => playerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
+        }
+
+        return (
+          <div className="nxp-banner">
+            <div className="nxp-banner-thumb">
+              {nextEp?.still_path ? (
+                <img src={still(nextEp.still_path)} alt="" loading="lazy" />
+              ) : (
+                <div className="nxp-banner-thumb-ph">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+              )}
+            </div>
+            <div className="nxp-banner-info">
+              <span className="nxp-banner-badge">UP NEXT</span>
+              <span className="nxp-banner-title">
+                {nextEp
+                  ? `S${selectedSeason}:E${nextEp.episode_number} · ${nextEp.name || `Episode ${nextEp.episode_number}`}`
+                  : `Season ${selectedSeason + 1} begins`
+                }
+              </span>
+              {nextEp?.runtime && <span className="nxp-banner-meta">{nextEp.runtime} min</span>}
+            </div>
+            <button className="nxp-banner-play" onClick={playNext}>
+              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"/></svg>
+              Play Now
+            </button>
+          </div>
+        )
+      })()}
+
       {hasStarted && (
         <div className="provider-bar">
           <span style={{ fontSize: 11, color: '#6b7a94', marginRight: 4 }}>Sources:</span>
@@ -442,73 +498,118 @@ export default function WatchPage({ params }: { params: { id: string } }) {
       )}
 
       {isTV && (
-        <div className="season-panel">
-          <div className="season-column">
-            <div className="season-label-row">
-              <span className="season-label-title">Seasons</span>
-              {seasonList.length > 0 && (
-                <span className="season-label-status">S{selectedSeason} · {seasonDetail?.episodes.length ?? 0} eps</span>
+        <div className="episodes-browser">
+          {/* Header row with title and season dropdown */}
+          <div className="episodes-browser-header">
+            <div className="episodes-browser-heading">
+              <h2>Episodes</h2>
+              {seasonDetail && seasonDetail.episodes.length > 0 && (
+                <span className="episodes-browser-count">
+                  S{selectedSeason} · {seasonDetail.episodes.length} episodes
+                </span>
               )}
             </div>
-            {seasonsLoading ? (
-              <p className="season-helper">Loading seasons…</p>
-            ) : seasonError ? (
-              <p className="season-helper">{seasonError}</p>
-            ) : seasonList.length === 0 ? (
-              <p className="season-helper">No seasons are available yet.</p>
-            ) : (
-              <div className="season-list">
-                {seasonList.map((seasonItem) => (
-                  <button
-                    key={`${seasonItem.id}-${seasonItem.season_number}`}
-                    type="button"
-                    className={`season-chip ${seasonItem.season_number === selectedSeason ? 'active' : ''}`}
-                    onClick={() => handleSeasonSelect(seasonItem.season_number)}
-                  >
-                    <span>{seasonItem.name || `Season ${seasonItem.season_number}`}</span>
-                    <small>{seasonItem.episode_count ?? 0} eps</small>
-                  </button>
-                ))}
+
+            {/* Season Dropdown — Netflix-style selector */}
+            {seasonList.length > 0 && (
+              <div className="season-selector">
+                <button
+                  className="season-selector-btn"
+                  onClick={() => setSeasonDropdownOpen(!seasonDropdownOpen)}
+                  onBlur={() => setTimeout(() => setSeasonDropdownOpen(false), 200)}
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5h3V8h4v4h3l-5 5z"/>
+                  </svg>
+                  {seasonList.find(s => s.season_number === selectedSeason)?.name || `Season ${selectedSeason}`}
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" className="season-selector-chevron">
+                    <path d="M7 10l5 5 5-5z"/>
+                  </svg>
+                </button>
+                {seasonDropdownOpen && (
+                  <div className="season-selector-menu">
+                    {seasonList.map(s => (
+                      <button
+                        key={s.season_number}
+                        className={`season-selector-item ${s.season_number === selectedSeason ? 'active' : ''}`}
+                        onMouseDown={() => { handleSeasonSelect(s.season_number); setSeasonDropdownOpen(false); }}
+                      >
+                        {s.name || `Season ${s.season_number}`}
+                        <span className="season-selector-eps">{s.episode_count} eps</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
-          <div className="episode-column">
-            <div className="season-label-row">
-              <span className="season-label-title">Episodes</span>
-              {seasonDetail && seasonDetail.episodes.length > 0 && (
-                <span className="season-label-status">S{selectedSeason} · E{selectedEpisode}</span>
-              )}
+
+          {/* Loading / Error / Empty states */}
+          {seasonsLoading ? (
+            <div className="episodes-browser-status">
+              <div className="spinner" />
+              <span>Loading seasons…</span>
             </div>
-            {seasonDetailLoading ? (
-              <p className="season-helper">Loading episodes…</p>
-            ) : seasonDetailError ? (
-              <p className="season-helper">{seasonDetailError}</p>
-            ) : !seasonDetail || seasonDetail.episodes.length === 0 ? (
-              <p className="season-helper">No episodes found for this season.</p>
-            ) : (
-              <div className="episode-list">
-                {seasonDetail.episodes.map((ep) => (
+          ) : seasonError ? (
+            <div className="episodes-browser-status">{seasonError}</div>
+          ) : seasonDetailLoading ? (
+            <div className="episodes-browser-status">
+              <div className="spinner" />
+              <span>Loading episodes…</span>
+            </div>
+          ) : seasonDetailError ? (
+            <div className="episodes-browser-status">{seasonDetailError}</div>
+          ) : !seasonDetail || seasonDetail.episodes.length === 0 ? (
+            <div className="episodes-browser-status">No episodes available for this season.</div>
+          ) : (
+            /* Episodes list — Netflix-style cards with thumbnails */
+            <div className="episodes-list">
+              {seasonDetail.episodes.map((ep) => {
+                const isActive = ep.episode_number === selectedEpisode
+                return (
                   <button
                     key={ep.id ?? `${selectedSeason}-${ep.episode_number}`}
                     type="button"
-                    className={`episode-card ${ep.episode_number === selectedEpisode ? 'active' : ''}`}
-                    ref={ep.episode_number === selectedEpisode ? (el) => { if (el) el.scrollIntoView({ block: 'nearest' }) } : undefined}
+                    className={`episode-card-netflix ${isActive ? 'active' : ''}`}
+                    ref={isActive ? (el) => { if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }) } : undefined}
                     onClick={() => handleEpisodeSelect(ep.episode_number)}
                   >
-                    <div>
-                      <div className="episode-title">
-                        Episode {ep.episode_number}{ep.name ? ` · ${ep.name}` : ''}
+                    {/* Thumbnail */}
+                    <div className="episode-card-thumb">
+                      {ep.still_path ? (
+                        <img src={still(ep.still_path)} alt={`Episode ${ep.episode_number}`} loading="lazy" />
+                      ) : (
+                        <div className="episode-card-thumb-placeholder">
+                          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                      )}
+                      <div className="episode-card-thumb-overlay">
+                        <div className="episode-card-play-btn">
+                          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
                       </div>
-                      <div className="episode-meta">
-                        {formatAirDate(ep.air_date)}
-                        {ep.runtime ? ` · ${ep.runtime}m` : ''}
+                      {isActive && <div className="episode-card-badge">NOW</div>}
+                    </div>
+
+                    {/* Episode info */}
+                    <div className="episode-card-info">
+                      <div className="episode-card-title-row">
+                        <span className="episode-card-number">
+                          {ep.episode_number < 10 ? `0${ep.episode_number}` : ep.episode_number}
+                        </span>
+                        <span className="episode-card-title">{ep.name || `Episode ${ep.episode_number}`}</span>
+                        {ep.runtime && <span className="episode-card-runtime">{ep.runtime}m</span>}
                       </div>
+                      {ep.overview && (
+                        <p className="episode-card-desc">{ep.overview.length > 120 ? `${ep.overview.slice(0, 120)}…` : ep.overview}</p>
+                      )}
+                      <span className="episode-card-date">{formatAirDate(ep.air_date)}</span>
                     </div>
                   </button>
-                ))}
-              </div>
-            )}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
 
